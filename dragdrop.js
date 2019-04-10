@@ -34,15 +34,9 @@ function add_element(id, x, y, element_type) {
     clone_to($("#"+id+"-moving"), id, $("#canvas"))
     var element = $("#"+id);
     element.css({
-        position: "relative",
+        position: "absolute",
         left: x,
         top: y
-    });
-    element.on("click", function() {
-        clone_to($("#"+id), id+"-moving", $("#mouse-follower"));
-        cancel_element(id);
-        $(document).on('mousemove', handle_mousemove(id+"-moving"));
-        $("#"+id+"-moving").on('mousedown', handle_mousedown(id, element_type));
     });
 }
 
@@ -50,17 +44,47 @@ function cancel_element(id) {
     $("#"+String(id)).remove();
 }
 
-function handle_mousedown(id, element_type) {
+function hide_if_outside(div){
+    var canvas = $("#canvas");
+    return function() {
+        var relative_x = mouse_X - div.outerWidth()/2 - canvas.offset().left;
+        var relative_y = mouse_Y - div.outerHeight()/2 - canvas.offset().top;
+        if ((relative_x < 0 | relative_y < 0 | relative_x > canvas.outerWidth() | relative_y > canvas.outerHeight())) {
+            div.hide();
+        } else {
+            div.show();
+        }
+    }
+}
+
+function cancel_if_outside(div) {
+    var canvas = $("#canvas");
+    return function() {
+        var relative_x = mouse_X - div.outerWidth()/2 - canvas.offset().left;
+        var relative_y = mouse_Y - div.outerHeight()/2 - canvas.offset().top;
+        if ((relative_x < 0 | relative_y < 0 | relative_x > canvas.outerWidth() | relative_y > canvas.outerHeight())) {
+            cancel_element(div.id);
+        }
+    }
+}
+
+function settle_new_creation(id, element_type) {
     var div = $("#"+id + "-moving");
     var canvas_div = $('#canvas');
     return function(e) {
         // first detect where it is
-        var relative_x = e.pageX-div.outerWidth()/2 - canvas_div.offset().left;
-        var relative_y = e.pageY-div.outerHeight()/2 - canvas_div.offset().top;
+        var abs_x = e.pageX-div.outerWidth()/2;
+        var abs_y = e.pageY-div.outerHeight()/2;
+        var relative_x = abs_x - canvas_div.offset().left;
+        var relative_y = abs_y - canvas_div.offset().top;
         if ((relative_x >= 0 && relative_x <= canvas_div.width()) && (relative_y >= 0 && relative_y <= canvas_div.height())) {
             // if inside canvas
-            add_element(id, relative_x, relative_y, element_type);
-            $("#"+id).off("mousemove", handle_mousedown(id, element_type));
+            add_element(id, abs_x, abs_y, element_type);
+            id_div = $("#"+id)
+            $("#"+id).draggable({
+                drag: hide_if_outside(id_div),
+                drop: cancel_if_outside(id_div)
+            });
         }
         cancel_element(id+"-moving");
     }
@@ -83,9 +107,9 @@ function add_box_listeners() {
             var new_id = String(classes[id].id)+String(next_id_number);
             next_id_number += 1;
 
-            clone_to($(this), new_id + "-moving", $("#mouse-follower"));
+            clone_to($(this), new_id+"-moving", $("#mouse-follower"));
             $(document).on('mousemove', handle_mousemove(new_id + "-moving"));
-            $("#"+new_id+"-moving").on('mousedown', handle_mousedown(new_id, id));
+            $("#"+new_id+"-moving").on('mousedown', settle_new_creation(new_id, id));
         };
     })
 }
