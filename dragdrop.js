@@ -8,12 +8,14 @@ function Item(id, class_name, type) {
     this.id = id;
     this.class_name = class_name;
     this.type = type;
+    this.prev_ids = [];
+    this.next_ids = [];
 };
 
 var mouse_X, mouse_Y;
 
 var classes = {
-    "dense": new ClassInformation("dense", "Dense", "layer"),
+    "dense": new ClassInformation("dense", "Dense", "layer")
 };
 var layer_items = [];
 var next_id_number = 0;
@@ -68,6 +70,18 @@ function cancel_if_outside(div) {
     }
 }
 
+function handle_newlink(id) {
+    return function() {
+        
+    };
+}
+
+function handle_select(id) {
+    return function() {
+
+    };
+}
+
 function settle_new_creation(id, element_type) {
     var div = $("#"+id + "-moving");
     var canvas_div = $('#canvas');
@@ -85,6 +99,8 @@ function settle_new_creation(id, element_type) {
                 drag: hide_if_outside(id_div),
                 drop: cancel_if_outside(id_div)
             });
+            $("#"+id).on("mousedown", handle_newlink(id));
+            $("#"+id).on("mousedown", handle_select(id));
         }
         cancel_element(id+"-moving");
     }
@@ -117,6 +133,16 @@ function add_box_listeners() {
 function update_mouse_vars(e) {
     mouse_X = e.pageX;
     mouse_Y = e.pageY;
+}
+
+function resize_svg() {
+    var svg = $("#lines-container");
+    var content = $("#content");
+    svg.css({
+        position: "absolute",
+        left: content.offset().left,
+        top: content.offset().top
+    })
 }
 
 $(document).ready(function() {

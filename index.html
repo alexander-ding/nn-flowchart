@@ -23,37 +23,13 @@
                 </div>
     
                 <ul class="list-unstyled components">
-                    <p>Dummy Heading</p>
-                    <div></div>
+                    <p>Layers</p>
                     <li>
                         <div class="holder click-create layer" id="dense">
                             <div class="d-flex box justify-content-center">
                                 <div class="align-self-start">Dense</div>
                             </div>
                         </div>           
-                    </li>
-                    <li>
-                        <a href="#">About</a>
-                    </li>
-                    <li>
-                        <a href="#pageSubmenu" data-toggle="collapse" aria-expanded="false"c lass="dropdown-toggle">Pages</a>
-                        <ul class="collapse list-unstyled" id="pageSubmenu">
-                            <li>
-                                <a href="#">Page 1</a>
-                            </li>
-                            <li>
-                                <a href="#">Page 2</a>
-                            </li>
-                            <li>
-                                <a href="#">Page 3</a>
-                            </li>
-                        </ul>
-                    </li>
-                    <li>
-                        <a href="#">Portfolio</a>
-                    </li>
-                    <li>
-                        <a href="#">Contact</a>
                     </li>
                 </ul>
     
@@ -101,11 +77,16 @@
                 <div class="row flex-grow-1 ui-widget-content" id="canvas">
                 </div>
             </div>
+            <svg id="lines-container"></svg>
             <div id="mouse-follower"></div>
         </div>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
     <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+
+    <script src="css-element-queries/src/ResizeSensor.js"></script>
+    <script src="css-element-queries/src/ElementQueries.js"></script>
+
     <!-- Popper.JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.0/umd/popper.min.js" integrity="sha384-cs/chFZiN24E4KMATLdqdvsezGxaGsi4hLGOzlXwp5UZB1LY//20VyM2taTB4QvJ" crossorigin="anonymous"></script>
     <!-- Bootstrap JS -->
