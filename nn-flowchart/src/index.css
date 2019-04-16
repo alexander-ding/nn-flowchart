@@ -1,0 +1,19 @@
+html, body, #root, #root>div {
+    height: 100%
+}
+.container-fluid {
+    padding: 0px;
+}
+
+.canvas-container {
+    padding: 0 !important;
+    text-align:center;
+}
+.button-container {
+    padding-bottom: 0.2rem !important;
+    padding-top: 0.2rem !important;
+}
+
+p {
+    margin-bottom: 0px !important;
+}
