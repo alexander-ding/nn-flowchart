@@ -50,11 +50,15 @@ export const nodeTypes = {
         name: "Dense",
         type: "layer",
         svg: dense,
+        offsetX: 20, // offsets are for giving a point of contact for lines
+        offsetY: 50, 
     },
     "conv": {
         name: "Conv",
         type: "layer",
         svg: conv,
+        offsetX: 40,
+        offsetY: 40,
     },
     "relu": {
         name: "ReLU",

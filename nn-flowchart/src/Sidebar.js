@@ -25,7 +25,7 @@ function Layer(props) {
 
   return (
     <div className="p-2 align-self-stretch button-container">
-      <button className="btn btn-dark btn-block" onClick={props.callBack(props.name)}>
+      <button className="btn btn-dark btn-block" onClick={() => props.newModel(props.name)}>
         {nodeTypes[props.name].name}
       </button>
     </div>
@@ -40,7 +40,7 @@ function ElementsContainer(props) {
       { layerNames.map((name) => 
         <Layer key={name}
           name={name}
-          callBack={props.createNew}
+          newModel={props.newModel}
         />)
       }
       </div>
@@ -53,7 +53,7 @@ export function Sidebar(props) {
     <nav id="sidebar">
       <SidebarHeader />
 
-      <ElementsContainer createNew={props.createNew}/>
+      <ElementsContainer newModel={props.newModel}/>
       <CTAList />
     
     </nav>
