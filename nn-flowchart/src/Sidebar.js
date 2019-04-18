@@ -3,10 +3,20 @@ import "./Sidebar.css";
 import {nodeTypes, layerNames} from "./ModelInfo.js";
 
 function SidebarHeader(props) {
+  const selectedClassName = "btn btn-dark btn-block";
+  const unselectedClassName = "btn btn-outline-dark btn-block";
   return (
     <div className="sidebar-header">
-        <button type="button" className="btn btn-dark btn-block">Add</button>
-        <button type="button" className="btn btn-outline-dark btn-block">Train</button>
+        <button type="button" 
+                className={props.tabSelected === "edit" ? selectedClassName : unselectedClassName }
+                onClick={() => props.changeTab("edit")}>
+                Edit
+        </button>
+        <button type="button" 
+                className={props.tabSelected === "train" ? selectedClassName : unselectedClassName}
+                onClick={() => props.changeTab("train")}>
+                Train
+        </button>
     </div>
   )
 }
@@ -21,20 +31,28 @@ function CTAList() {
   )
 }
 
-function Layer(props) {
-
+function Button(props) {
   return (
     <div className="p-2 align-self-stretch button-container">
-      <button className="btn btn-dark btn-block" onClick={() => props.newModel(props.name)}>
-        {nodeTypes[props.name].name}
+      <button className="btn btn-dark btn-block" onClick={props.onClick}>
+        {props.children}
       </button>
     </div>
   );
 }
 
-function ElementsContainer(props) {
+function Layer(props) {
+  /* returns a button to create a layer */
   return (
-    <ul className="list-unstyled components">
+    <Button onClick={() => props.newModel(props.name)}>
+      {nodeTypes[props.name].name}
+    </Button>
+  )
+}
+
+function EditElements(props) {
+  return (
+    <React.Fragment>
       <p>Layers</p>
       <div className="d-flex flex-column">
       { layerNames.map((name) => 
@@ -44,18 +62,59 @@ function ElementsContainer(props) {
         />)
       }
       </div>
+    </React.Fragment>
+  )
+}
+
+function TrainElements(props) {
+  return (
+    <React.Fragment>
+      <p>Inputs</p>
+      <Button>Some button for it</Button>
+
+      <p>Model</p>
+      <Button>Train on Cloud</Button>
+      <Button>Generate Link</Button>
+      <Button>Export</Button>
+    </React.Fragment>
+  )
+}
+
+function ElementsContainer(props) {
+  const Elements = props.tabSelected === "edit" ? EditElements(props) : TrainElements(props)
+  return (
+    <ul className="list-unstyled components">
+      {Elements}
     </ul>
   )
 }
 
-export function Sidebar(props) {
-  return (
-    <nav id="sidebar">
-      <SidebarHeader />
+export class Sidebar extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      props: props,
+      tabSelected: "edit", // which tab is selected
+    };
+    this.changeTab = this.changeTab.bind(this);
+  }
 
-      <ElementsContainer newModel={props.newModel}/>
-      <CTAList />
-    
-    </nav>
-  )
+  changeTab(tab) {
+    /* updates the current tab selected */
+    this.setState({
+      tabSelected: tab
+    })
+  }
+
+  render() {
+    return (
+      <nav id="sidebar">
+        <SidebarHeader tabSelected={this.state.tabSelected} changeTab={this.changeTab} />
+        <ElementsContainer tabSelected={this.state.tabSelected} newModel={this.state.props.newModel}/>
+        <CTAList />
+      
+      </nav>
+    )
+  }
+  
 }

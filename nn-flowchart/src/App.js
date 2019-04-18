@@ -28,7 +28,7 @@ export class App extends React.Component {
       type: type,
       x: 10 + Math.random() * 80,
       y: 10 + Math.random() * 80,
-      connectedTo: null, // temp
+      connectedTo: null,
       activation: null,
       data: {},
     }

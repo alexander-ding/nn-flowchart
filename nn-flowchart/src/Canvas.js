@@ -75,6 +75,8 @@ class Canvas extends React.Component {
         this.props.remove(selected);
         return;
       }
+
+      // delete selected line
       const from = this.state.selectedLineFromTo[0];
       const to = this.state.selectedLineFromTo[1];
       if (from !== -1 || to !== -1) {
