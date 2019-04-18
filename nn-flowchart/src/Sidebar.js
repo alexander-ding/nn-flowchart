@@ -1,6 +1,6 @@
 import React from 'react';
 import "./Sidebar.css";
-import {nodeTypes, layerNames} from "./Constants.js";
+import {nodeTypes, layerNames} from "./ModelInfo.js";
 
 function SidebarHeader(props) {
   return (

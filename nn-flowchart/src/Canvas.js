@@ -1,9 +1,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import "./Canvas.css";
-import {nodeTypes} from "./Constants.js";
+import {nodeTypes} from "./ModelInfo.js";
 import {Group} from "./Group.js";
 import {MarkerDefs, Line} from "./Line.js";
+import {DELETE_KEY} from "./Constants.js";
 
 
 function modelCenter(model) {
@@ -30,7 +31,7 @@ class Canvas extends React.Component {
       yOffset: 0, // ibid for y
       x: 0, // x of the mouse relative to the svg
       y: 0, // ibid for y
-      id: 0, // id of the line from which the current new line stems from
+      id: -1, // id of the line from which the current new line stems from
       selectedLineFromTo: [-1,-1], // selected line from node X to node Y ([X,Y])
     }
 
@@ -39,6 +40,7 @@ class Canvas extends React.Component {
     this.trackMouse = this.trackMouse.bind(this);
     this.handleBGClick = this.handleBGClick.bind(this);
     this.handleLineClick = this.handleLineClick.bind(this);
+    this.deleteSelection = this.deleteSelection.bind(this);
   }
 
   componentDidMount() {
@@ -48,13 +50,36 @@ class Canvas extends React.Component {
       xOffset: dim.x,
       yOffset: dim.y,
     });
+
+    // setup key listener for deletion
+    document.addEventListener("keydown", this.deleteSelection);
+  }
+
+  componentWillUnmount() {
+    // reset
+    document.removeEventListener("keydown", this.deleteSelection);
+  }
+
+  deleteSelection(e) {
+    if (e.keyCode === DELETE_KEY) {
+      // first cancel a few things just in case (to prevent errors)
+      this.cancelNewline();
+    
+      // prioritize items over line
+      // if an item is selected
+      if (this.props.selected !== -1) {
+        const selected = this.props.selected
+        this.props.select(-1);
+        this.props.remove(selected);
+      }
+    }
   }
 
   startNewline(id) {
     /* starts the construction of a tentative new line */
     this.setState( {
       isNewline: true,
-      id: id
+      id: id,
     });
   }
 
@@ -62,6 +87,7 @@ class Canvas extends React.Component {
     /* cancels the tentative new line */
     this.setState({
       isNewline: false,
+      id: -1,
     })
   }
 
@@ -115,7 +141,7 @@ class Canvas extends React.Component {
 
   render() {
     // let's do all the layers from the model first
-    const modelElements = this.props.models.map(model => 
+    const modelElements = Object.entries(this.props.models).map(([key, model]) => 
       <Group key={model.ID} model={model} select={this.props.select} selected={this.props.selected===model.ID} update={this.props.update} isClicked={this.handleElementClick}/>
     );
     
@@ -127,7 +153,7 @@ class Canvas extends React.Component {
     }
 
     // renders all the lines between models
-    const lines = this.props.models.map((model, index) => {
+    const lines = Object.entries(this.props.models).map(([index, model]) => {
       // no line if there is no connection
       if (model.connectedTo === null) {
         return null;
@@ -169,7 +195,7 @@ export function CanvasContainer(props) {
     // padding on top and below to look extra good
     <div className="p-2 flex-grow-1 canvas-container"> 
       <Padding/>
-      <Canvas models={props.models} selected={props.selected} select={props.select} update={props.update}/>
+      <Canvas models={props.models} selected={props.selected} select={props.select} update={props.update} remove={props.remove}/>
       <Padding/>
     </div>
   );

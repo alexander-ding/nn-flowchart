@@ -1,5 +1,5 @@
 import React from 'react';
-import {nodeTypes} from "./Constants.js";
+import {nodeTypes} from "./ModelInfo.js";
 
 export class Group extends React.Component {
     constructor(props) {

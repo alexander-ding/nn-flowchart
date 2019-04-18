@@ -8,7 +8,7 @@ export class App extends React.Component {
     super(props);
   
     this.state = {
-      models: [],
+      models: {},
       selected: 0,
       nextID: 0,
     };
@@ -17,6 +17,7 @@ export class App extends React.Component {
     this.newModel = this.newModel.bind(this);
     this.updateModel = this.updateModel.bind(this);
     this.selectModel = this.selectModel.bind(this);
+    this.removeModel = this.removeModel.bind(this);
   }
 
   model(type) {
@@ -34,8 +35,8 @@ export class App extends React.Component {
   }
 
   newModel(type) {
-    const oldModels = this.state.models.slice();
-    const newModels = [...oldModels, this.model(type)];
+    const oldModels = {...this.state.models};
+    const newModels = {...oldModels, [this.state.nextID]: this.model(type)};
     this.setState({
       models: newModels,
       nextID: this.state.nextID + 1,
@@ -52,7 +53,7 @@ export class App extends React.Component {
     /* given a dict of properties to update ((name, value) pairs)
      * updates the model of the given id
      */
-    const models = this.state.models.slice();
+    const models = {...this.state.models};
     for (const key of Object.keys(dict)) {
       models[id][key] = dict[key];
     }
@@ -61,11 +62,35 @@ export class App extends React.Component {
     })
   }
 
+  removeModel(id) {
+    /* given an id, removes the corresponding model
+     * and all connections to it
+     */
+
+    // get filtered models
+    let newModels = {};
+    for (const key of Object.keys(this.state.models)) {
+      if (this.state.models[key].ID !== id) {
+        newModels[key] = this.state.models[key];
+      }
+    }
+
+    for (const key of Object.keys(newModels)) {
+      if (newModels[key].connectedTo === id) {
+        newModels[key].connectedTo = null;
+      }
+    }
+
+    this.setState({
+      models: newModels,
+    })
+  }
+
   render() {
     return (
       <div className="container-fluid d-flex h-100 flex-row">
         <Sidebar newModel={this.newModel}/>
-        <CanvasContainer models={this.state.models} selected={this.state.selected} select={this.selectModel} update={this.updateModel}/>
+        <CanvasContainer models={this.state.models} selected={this.state.selected} select={this.selectModel} update={this.updateModel} remove={this.removeModel}/>
       </div>
       
     );
