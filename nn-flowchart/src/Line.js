@@ -7,6 +7,10 @@ export function MarkerDefs(props) {
           markerWidth="5" markerHeight="5">
           <circle cx="5" cy="5" r="3" fill="black" />
         </marker>
+        <marker id="arrow" markerWidth="4" markerHeight="4"
+        orient="auto" refY="2">
+          <path d="M0,0 L4,2 0,4"/>
+        </marker>
       </defs>
     )
   }
@@ -19,20 +23,21 @@ export function Line(props) {
     if ("pointerEvents" in props) {
       pointerEvents = props.pointerEvents;
     }
+    const midX = (props.x1+props.x2) / 2;
+    const midY = (props.y1+props.y2) / 2;
     return (
-    <line x1={props.x1} 
-          y1={props.y1} 
-          x2={props.x2} 
-          y2={props.y2}
+    <path d={"M "+props.x1+" "+props.y1+
+             " L "+midX+" "+midY+
+             " L "+props.x2+" "+props.y2}
           onClick={onClick}
           className={className}
           pointerEvents={pointerEvents}
           strokeDasharray={strokeDasharray} 
           stroke="black" 
           strokeWidth="3"
-          markerStart="url(#dot)"
-          markerEnd="url(#dot)"
-    />
+          markerStart="url(#arrow)"
+          markerMid="url(#arrow)"
+          markerEnd="url(#dot)"/>
     );
   }
   

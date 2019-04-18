@@ -62,21 +62,40 @@ class Canvas extends React.Component {
 
   deleteSelection(e) {
     if (e.keyCode === DELETE_KEY) {
-      // first cancel a few things just in case (to prevent errors)
-      this.cancelNewline();
+      
     
       // prioritize items over line
       // if an item is selected
       if (this.props.selected !== -1) {
+        // first cancel a few things just in case (to prevent errors)
+        this.cancelNewline();
         const selected = this.props.selected
         this.props.select(-1);
+
         this.props.remove(selected);
+        return;
+      }
+      const from = this.state.selectedLineFromTo[0];
+      const to = this.state.selectedLineFromTo[1];
+      if (from !== -1 || to !== -1) {
+        this.cancelNewline();
+        this.props.update(from, {
+          connectedTo: null,
+        });
+        return;
       }
     }
   }
 
   startNewline(id) {
     /* starts the construction of a tentative new line */
+    // cancel any existing line
+    if (this.props.models[id].connectedTo !== null) {
+      this.props.update(id, {
+        connectedTo: null
+      });
+    }
+
     this.setState( {
       isNewline: true,
       id: id,
@@ -88,6 +107,7 @@ class Canvas extends React.Component {
     this.setState({
       isNewline: false,
       id: -1,
+      selectedLineFromTo: [-1, -1], // reset line selection
     })
   }
 
