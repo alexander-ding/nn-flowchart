@@ -1,6 +1,7 @@
 import React from 'react';
 import {Sidebar} from "./Sidebar.js";
 import {CanvasContainer} from "./Canvas.js";
+import {Toolbar} from "./Toolbar.js";
 import './App.css';
 
 export class App extends React.Component {
@@ -88,9 +89,13 @@ export class App extends React.Component {
 
   render() {
     return (
-      <div className="container-fluid d-flex h-100 flex-row">
+      <div className="container-fluid d-flex h-100 flex-row no-margin">
         <Sidebar newModel={this.newModel}/>
-        <CanvasContainer models={this.state.models} selected={this.state.selected} select={this.selectModel} update={this.updateModel} remove={this.removeModel}/>
+        <div className="d-flex w-100 p-2 flex-column flex-grow-1 no-margin">
+          <CanvasContainer models={this.state.models} selected={this.state.selected} select={this.selectModel} update={this.updateModel} remove={this.removeModel}/>
+          <Toolbar/>
+        </div>
+        
       </div>
       
     );

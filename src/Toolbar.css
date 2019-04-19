@@ -1,0 +1,12 @@
+#toolbar {
+    min-height: 125px;
+    max-height: 125px;
+    background: rgb(94, 114, 192);
+    color: #fff;
+    width: 100%;
+}
+
+.parameter-line {
+    width: 100%;
+    
+}

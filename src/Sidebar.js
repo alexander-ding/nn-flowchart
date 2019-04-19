@@ -108,7 +108,7 @@ export class Sidebar extends React.Component {
 
   render() {
     return (
-      <nav id="sidebar">
+      <nav className="p-2 h-100" id="sidebar">
         <SidebarHeader tabSelected={this.state.tabSelected} changeTab={this.changeTab} />
         <ElementsContainer tabSelected={this.state.tabSelected} newModel={this.state.props.newModel}/>
         <CTAList />

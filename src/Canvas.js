@@ -215,7 +215,7 @@ export function CanvasContainer(props) {
   /* contains the main section of the page yay */
   return (
     // padding on top and below to look extra good
-    <div className="p-2 flex-grow-1 canvas-container"> 
+    <div className="p-2 flex-grow-1 canvas-container no-margin"> 
       <Padding/>
       <Canvas models={props.models} selected={props.selected} select={props.select} update={props.update} remove={props.remove}/>
       <Padding/>
