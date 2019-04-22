@@ -1,6 +1,6 @@
 import React from 'react';
 import "./Sidebar.css";
-import {nodeTypes, layerNames} from "./ModelInfo.js";
+import {nodeTypes, layerNames, activationNames} from "./ModelInfo.js";
 
 function SidebarHeader(props) {
   const selectedClassName = "btn btn-dark btn-block";
@@ -50,23 +50,68 @@ function Layer(props) {
   )
 }
 
-function EditElements(props) {
+function Activation(props) {
+  /* returns a button to append an activation */
   return (
-    <React.Fragment>
+    <Button onClick={() => props.newActivation(props.name)}>
+      {nodeTypes[props.name].name}
+    </Button>
+  )
+}
+
+class EditElements extends React.Component {
+  constructor(props) {
+    super(props);
+    this.props = props;
+    this.setActivation = this.setActivation.bind(this);
+  }
+
+  setActivation(name) {
+    // must have a layer selected
+    if (this.props.selected === -1) {
+      this.props.setError("Select a layer to add the activation to first!", true);
+      return;
+    }
+    const selected = this.props.models[this.props.selected]
+    // cancel the existing activation if it's the same as this
+    if (selected.activation === name) {
+      this.props.update(this.props.selected, {
+        activation: null,
+      });
+    } else {
+      this.props.update(this.props.selected, {
+        activation: name,
+      });
+    }
+  }
+  
+  render() {
+    return <React.Fragment>
       <p>Layers</p>
       <div className="d-flex flex-column">
       { layerNames.map((name) => 
         <Layer key={name}
           name={name}
-          newModel={props.newModel}
+          newModel={this.props.newModel}
         />)
       }
       </div>
+      <p>Activations</p>
+      <div className="d-flex flex-column">
+      { activationNames.map((name) => 
+        <Activation key={name} 
+          name={name} 
+          newActivation={() => this.setActivation(name)}
+        />
+        )
+      }
+      </div>
     </React.Fragment>
-  )
+  }
 }
 
-function TrainElements(props) {
+function TrainElements(propOri) {
+  const props = propOri
   return (
     <React.Fragment>
       <p>Inputs</p>
@@ -81,7 +126,8 @@ function TrainElements(props) {
 }
 
 function ElementsContainer(props) {
-  const Elements = props.tabSelected === "edit" ? EditElements(props) : TrainElements(props)
+  const propsExtracted = props.props;
+  const Elements = props.tabSelected === "edit" ? <EditElements models={propsExtracted.models} selected={propsExtracted.selected} setError={propsExtracted.setError} newModel={propsExtracted.newModel} update={propsExtracted.update}/>: <TrainElements props={propsExtracted}/>;
   return (
     <ul className="list-unstyled components">
       {Elements}
@@ -92,8 +138,8 @@ function ElementsContainer(props) {
 export class Sidebar extends React.Component {
   constructor(props) {
     super(props);
+    this.props = props
     this.state = {
-      props: props,
       tabSelected: "edit", // which tab is selected
     };
     this.changeTab = this.changeTab.bind(this);
@@ -110,7 +156,7 @@ export class Sidebar extends React.Component {
     return (
       <nav className="p-2 h-100" id="sidebar">
         <SidebarHeader tabSelected={this.state.tabSelected} changeTab={this.changeTab} />
-        <ElementsContainer tabSelected={this.state.tabSelected} newModel={this.state.props.newModel}/>
+        <ElementsContainer tabSelected={this.state.tabSelected} props={this.props}/>
         <CTAList />
       
       </nav>

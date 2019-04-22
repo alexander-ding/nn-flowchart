@@ -1,0 +1,10 @@
+.position-absolute {
+    position: "absolute" !important;
+}
+
+.float-box {
+    top: 40px;
+    right: 10px;
+    min-width: 20rem;
+    max-height: 4rem !important;
+}

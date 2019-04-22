@@ -6,7 +6,31 @@
     width: 100%;
 }
 
+.left-line {
+    width: 40%;
+    float: left;
+}
+
+.right-line {
+    width: 40%;
+    float: right;
+}
+
 .parameter-line {
-    width: 100%;
-    
+    width: 100%; 
+    height: 25px;
+}
+
+.parameter-name {
+    width: 30%;
+    float: left;
+}
+
+.parameter-value {
+    width: 30%;
+    float: right;
+}
+
+#toolbar-container {
+    margin: 10px;
 }

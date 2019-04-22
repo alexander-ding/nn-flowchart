@@ -62,14 +62,17 @@ class Canvas extends React.Component {
 
   deleteSelection(e) {
     if (e.keyCode === DELETE_KEY) {
-      
-    
       // prioritize items over line
       // if an item is selected
       if (this.props.selected !== -1) {
         // first cancel a few things just in case (to prevent errors)
         this.cancelNewline();
-        const selected = this.props.selected
+        const selected = this.props.selected;
+        
+        // cannot delete input or output node
+        if (selected === 0 || selected === 1) {
+          return;
+        }
         this.props.select(-1);
 
         this.props.remove(selected);
@@ -91,16 +94,11 @@ class Canvas extends React.Component {
 
   startNewline(id) {
     /* starts the construction of a tentative new line */
-    // cancel any existing line
-    if (this.props.models[id].connectedTo !== null) {
-      this.props.update(id, {
-        connectedTo: null
-      });
-    }
 
     this.setState( {
       isNewline: true,
       id: id,
+      selectedLineFromTo: [-1, -1], // reset line selection
     });
   }
 
@@ -137,11 +135,20 @@ class Canvas extends React.Component {
      */
     // if this is a new line, clicked on another object
     if (this.state.isNewline) {
+
+      // if the line is drawn to itself, ignore
       if (this.state.id !== id) {
         // update model so that new connection is made
         this.props.update(this.state.id, {
           connectedTo: id,
-        })
+        });
+        
+        // if the reverse connection exists, cancel it
+        if (this.props.models[id].connectedTo === this.state.id) {
+          this.props.update(id, {
+            connectedTo: null,
+          })
+        }
       }
       // remove temporary line
       this.cancelNewline();
@@ -188,6 +195,7 @@ class Canvas extends React.Component {
       return <Line key={index} tentative={false} selected={selected} x1={coords.x} y1={coords.y} x2={otherCoords.x} y2={otherCoords.y} onClick={() => this.handleLineClick(model.ID, otherModel.ID)}></Line>
     })
 
+    
     return (
       // stick a rect for background
       <svg onClick={this.handleBGClick} onMouseMove={this.trackMouse} id="canvas" width="100%" height="60%" ref="canvas">

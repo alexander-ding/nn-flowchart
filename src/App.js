@@ -2,6 +2,8 @@ import React from 'react';
 import {Sidebar} from "./Sidebar.js";
 import {CanvasContainer} from "./Canvas.js";
 import {Toolbar} from "./Toolbar.js";
+import {ErrorBox} from "./ErrorBox.js";
+import {isCyclic, isLinear} from "./Utils.js";
 import './App.css';
 
 export class App extends React.Component {
@@ -9,9 +11,13 @@ export class App extends React.Component {
     super(props);
   
     this.state = {
-      models: {},
+      models: {
+        0: this._model("input", 0, 20, 50),
+        1: this._model("output", 1, 300, 50)},
       selected: 0,
-      nextID: 0,
+      nextID: 2,
+      errorMsg: null,
+      errorOnce: true,
     };
 
     // function bindings
@@ -19,20 +25,24 @@ export class App extends React.Component {
     this.updateModel = this.updateModel.bind(this);
     this.selectModel = this.selectModel.bind(this);
     this.removeModel = this.removeModel.bind(this);
+    this.setError = this.setError.bind(this);
   }
 
-  model(type) {
-    /* just a helper function */
+  
+  _model(type, id, x, y) {
     return {
-      name: type + String(this.state.nextID),
-      ID: this.state.nextID,
+      name: type + String(id),
+      ID: id,
       type: type,
-      x: 10 + Math.random() * 80,
-      y: 10 + Math.random() * 80,
+      x: x,
+      y: y,
       connectedTo: null,
       activation: null,
       data: {},
-    }
+    };
+  }
+  model(type) {
+    return this._model(type, this.state.nextID, 10 + Math.random() * 80, 10 + Math.random() * 80);
   }
 
   newModel(type) {
@@ -57,6 +67,13 @@ export class App extends React.Component {
     const models = {...this.state.models};
     for (const key of Object.keys(dict)) {
       models[id][key] = dict[key];
+    }
+    if (isCyclic(models)) {
+      this.setError("Graph cannot have loops", false)
+    } else if (!isLinear(models)) {
+      this.setError("Graph must be linear!", false)
+    } else {
+      this.setError(null, false)
     }
     this.setState({
       models: models,
@@ -87,16 +104,28 @@ export class App extends React.Component {
     })
   }
 
+  setError(err, once) {
+    /* sets the error message */
+    this.setState({
+      errorMsg: err,
+      errorOnce: once,
+    })
+  }
+
   render() {
+    const selectedModel = this.state.selected === -1 ? null : this.state.models[this.state.selected];
     return (
-      <div className="container-fluid d-flex h-100 flex-row no-margin">
-        <Sidebar newModel={this.newModel}/>
-        <div className="d-flex w-100 p-2 flex-column flex-grow-1 no-margin">
-          <CanvasContainer models={this.state.models} selected={this.state.selected} select={this.selectModel} update={this.updateModel} remove={this.removeModel}/>
-          <Toolbar/>
+      <React.Fragment>
+        <ErrorBox errorMsg={this.state.errorMsg} dismissible={this.state.errorOnce} setError={this.setError}/>
+        <div className="container-fluid d-flex h-100 flex-row no-margin">
+          <Sidebar models={this.state.models} selected={this.state.selected} newModel={this.newModel} setError={this.setError} update={this.updateModel} />
+          <div className="d-flex w-100 p-2 flex-column flex-grow-1 no-margin" ref="canvasContainer">
+            <CanvasContainer models={this.state.models} selected={this.state.selected} select={this.selectModel} update={this.updateModel} remove={this.removeModel}/>
+            <Toolbar model={selectedModel}/>
+          </div>
+          
         </div>
-        
-      </div>
+      </React.Fragment>
       
     );
   }
