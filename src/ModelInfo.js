@@ -81,6 +81,9 @@ export const nodeTypes = {
         svg: dense,
         offsetX: 20, // offsets are for giving a point of contact for lines
         offsetY: 50, 
+        defaultParameters: {
+          units: 16,
+        }
     },
     "conv": {
         name: "Conv",
@@ -88,6 +91,11 @@ export const nodeTypes = {
         svg: conv,
         offsetX: 40,
         offsetY: 40,
+        defaultParameters: {
+          filters: 8,
+          kernelSize: [3,3], // could be both tuple or int. ndim needs to match with stride
+          stride: 1, // could be both tuple or int
+        }
     },
     "input": {
       name: "Input",
@@ -95,6 +103,9 @@ export const nodeTypes = {
       svg: input,
       offsetX: 15,
       offsetY: 15,
+      defaultParameters: {
+        data: "MNIST",
+      }
     },
     "output": {
       name: "Output",
@@ -102,11 +113,13 @@ export const nodeTypes = {
       svg: output,
       offsetX: 10,
       offsetY: 40,
+      defaultParameters: {}
     },
     "relu": {
       name: "ReLU",
       type: "activation",
       svg: relu,
+      defaultParameters: {}
     }
 };
 

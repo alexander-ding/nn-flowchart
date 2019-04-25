@@ -111,7 +111,7 @@ class EditElements extends React.Component {
 }
 
 function TrainElements(propOri) {
-  const props = propOri
+  // const props = propOri
   return (
     <React.Fragment>
       <p>Inputs</p>

@@ -4,6 +4,7 @@ import {CanvasContainer} from "./Canvas.js";
 import {Toolbar} from "./Toolbar.js";
 import {ErrorBox} from "./ErrorBox.js";
 import {isCyclic, isLinear} from "./Utils.js";
+import {nodeTypes} from "./ModelInfo.js";
 import './App.css';
 
 export class App extends React.Component {
@@ -38,7 +39,7 @@ export class App extends React.Component {
       y: y,
       connectedTo: null,
       activation: null,
-      data: {},
+      parameters: nodeTypes[type].defaultParameters,
     };
   }
   model(type) {
@@ -104,6 +105,24 @@ export class App extends React.Component {
     })
   }
 
+  updateParameters(id, name, value) {
+    /* given a dict of properties to update ((name, value) pairs)
+     * updates the parameters of the model of the given id
+     */
+
+    // copy the model
+    const model = {...this.state.models[id]};
+    model["parameters"][name] = value;
+    const models = {...this.state.models}; // make a copy
+
+    // TODO: check if reasonable here
+    
+    models[id] = model;
+    this.setState({
+      models: models,
+    });
+  }
+
   setError(err, once) {
     /* sets the error message */
     this.setState({
@@ -121,7 +140,7 @@ export class App extends React.Component {
           <Sidebar models={this.state.models} selected={this.state.selected} newModel={this.newModel} setError={this.setError} update={this.updateModel} />
           <div className="d-flex w-100 p-2 flex-column flex-grow-1 no-margin" ref="canvasContainer">
             <CanvasContainer models={this.state.models} selected={this.state.selected} select={this.selectModel} update={this.updateModel} remove={this.removeModel}/>
-            <Toolbar model={selectedModel}/>
+            <Toolbar model={selectedModel} update={(name, value) => this.updateParameters(this.state.selected, name, value)}/>
           </div>
           
         </div>

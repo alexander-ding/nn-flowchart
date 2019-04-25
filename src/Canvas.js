@@ -33,6 +33,8 @@ class Canvas extends React.Component {
       y: 0, // ibid for y
       id: -1, // id of the line from which the current new line stems from
       selectedLineFromTo: [-1,-1], // selected line from node X to node Y ([X,Y])
+      incomingShape: null, // shape of data coming in
+      outgoingShape: null, // shape of data going out
     }
 
     // some function bindings
