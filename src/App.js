@@ -12,13 +12,16 @@ export class App extends React.Component {
     super(props);
   
     this.state = {
-      models: {
+      models: { // represent the architecture
         0: this._model("input", 0, 20, 50),
-        1: this._model("output", 1, 300, 50)},
-      selected: 0,
-      nextID: 2,
-      errorMsg: null,
-      errorOnce: true,
+        1: this._model("output", 1, 300, 50)
+      },
+      selected: 0, // selected node;
+      nextID: 2, // the ID for the next new layer; incremented as model grows
+      errorMsg: null, // error message
+      errorOnce: true, // is the error one-time or persistent?
+      training: false, // whether the model is being trained on cloud
+      editableSelected: false, // whether an editable element of the toolbar is selected
     };
 
     // function bindings
@@ -27,6 +30,8 @@ export class App extends React.Component {
     this.selectModel = this.selectModel.bind(this);
     this.removeModel = this.removeModel.bind(this);
     this.setError = this.setError.bind(this);
+    this.trainCloud = this.trainCloud.bind(this);
+    this.setEditableSelected = this.setEditableSelected.bind(this);
   }
 
   
@@ -38,17 +43,40 @@ export class App extends React.Component {
       x: x,
       y: y,
       connectedTo: null,
+      shapeIn: null, // dependent
+      shapeOut: null, // dependent
       activation: null,
       parameters: nodeTypes[type].defaultParameters,
     };
   }
+
   model(type) {
     return this._model(type, this.state.nextID, 10 + Math.random() * 80, 10 + Math.random() * 80);
   }
 
+  updateDependents(models) {
+    /* helper function to update members of nodes
+     * that depend on other parts of the system 
+     */
+
+    // get the input model
+    let inputNode = models[0];
+    inputNode.shapeOut = nodeTypes[inputNode.type].shapeOut(inputNode.parameters, null);
+    let currentNode = inputNode;
+    let nextNode = models[inputNode.connectedTo];
+    while (currentNode.connectedTo !== null) {
+      nextNode.shapeIn = currentNode.shapeOut;
+      nextNode.shapeOut = nodeTypes[nextNode.type].shapeOut(nextNode.parameters, nextNode.shapeIn);
+      currentNode = nextNode;
+      nextNode = models[nextNode.connectedTo];
+    }
+    return models;
+  }
+
   newModel(type) {
     const oldModels = {...this.state.models};
-    const newModels = {...oldModels, [this.state.nextID]: this.model(type)};
+    let newModels = {...oldModels, [this.state.nextID]: this.model(type)};
+    newModels = this.updateDependents(newModels);
     this.setState({
       models: newModels,
       nextID: this.state.nextID + 1,
@@ -65,20 +93,23 @@ export class App extends React.Component {
     /* given a dict of properties to update ((name, value) pairs)
      * updates the model of the given id
      */
-    const models = {...this.state.models};
+    let models = {...this.state.models};
     for (const key of Object.keys(dict)) {
       models[id][key] = dict[key];
     }
     if (isCyclic(models)) {
       this.setError("Graph cannot have loops", false)
-    } else if (!isLinear(models)) {
-      this.setError("Graph must be linear!", false)
+    } else if (!isLinear(models)["ok"]) {
+      this.setError(isLinear(models)["err"], false)
     } else {
       this.setError(null, false)
     }
+
+    models = this.updateDependents(models);
     this.setState({
       models: models,
-    })
+    });
+    
   }
 
   removeModel(id) {
@@ -100,9 +131,10 @@ export class App extends React.Component {
       }
     }
 
+    newModels = this.updateDependents(newModels);
     this.setState({
       models: newModels,
-    })
+    });
   }
 
   updateParameters(id, name, value) {
@@ -112,12 +144,32 @@ export class App extends React.Component {
 
     // copy the model
     const model = {...this.state.models[id]};
-    model["parameters"][name] = value;
-    const models = {...this.state.models}; // make a copy
 
-    // TODO: check if reasonable here
+    // now, important: check to ensure value is integer or tuple or integer
+    let components = String(value).split(",");
+
+    // do not accept empty inputs
+    if (components.length === 0) {
+      return;
+    }
+    for (var i = 0; i < components.length; i++) {
+      const num = parseInt(components[i]);
+      // do not update if any member of tuple is not a number
+      if (isNaN(num)) {
+        return;
+      }
+      components[i] = num;
+    }
+    // if tuple, set array
+    if (components.length > 1) {
+      model["parameters"][name] = components;
+    } else {
+      model["parameters"][name] = components[0];
+    }
+    let models = {...this.state.models}; // make a copy
     
     models[id] = model;
+    models = this.updateDependents(models);
     this.setState({
       models: models,
     });
@@ -128,19 +180,45 @@ export class App extends React.Component {
     this.setState({
       errorMsg: err,
       errorOnce: once,
+    });
+  }
+  
+  setEditableSelected(t) {
+    this.setState({
+      editableSelected: t,
+    });
+  }
+
+  trainCloud() {
+    // first check if the model is linear
+    if (!isLinear(this.state.models)) {
+      return;
+    }
+    const serializedModel = JSON.stringify(this.state.models);
+    const response = fetch('localhost:8000', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: serializedModel
+    }).then(response => response.json())
+    .catch(e => this.setError("Cannot reach server", true));
+
+    this.setState({
+      training: true,
     })
   }
 
   render() {
-    const selectedModel = this.state.selected === -1 ? null : this.state.models[this.state.selected];
     return (
       <React.Fragment>
         <ErrorBox errorMsg={this.state.errorMsg} dismissible={this.state.errorOnce} setError={this.setError}/>
         <div className="container-fluid d-flex h-100 flex-row no-margin">
-          <Sidebar models={this.state.models} selected={this.state.selected} newModel={this.newModel} setError={this.setError} update={this.updateModel} />
+          <Sidebar models={this.state.models} selected={this.state.selected} newModel={this.newModel} setError={this.setError} update={this.updateModel} trainCloud={this.trainCloud}/>
           <div className="d-flex w-100 p-2 flex-column flex-grow-1 no-margin" ref="canvasContainer">
-            <CanvasContainer models={this.state.models} selected={this.state.selected} select={this.selectModel} update={this.updateModel} remove={this.removeModel}/>
-            <Toolbar model={selectedModel} update={(name, value) => this.updateParameters(this.state.selected, name, value)}/>
+            <CanvasContainer models={this.state.models} selected={this.state.selected} select={this.selectModel} update={this.updateModel} remove={this.removeModel} editableSelected={this.state.editableSelected}/>
+            <Toolbar selected={this.state.selected} models={this.state.models} update={(name, value) => this.updateParameters(this.state.selected, name, value)} setEditableSelected={this.setEditableSelected}/>
           </div>
           
         </div>

@@ -33,8 +33,6 @@ class Canvas extends React.Component {
       y: 0, // ibid for y
       id: -1, // id of the line from which the current new line stems from
       selectedLineFromTo: [-1,-1], // selected line from node X to node Y ([X,Y])
-      incomingShape: null, // shape of data coming in
-      outgoingShape: null, // shape of data going out
     }
 
     // some function bindings
@@ -63,6 +61,10 @@ class Canvas extends React.Component {
   }
 
   deleteSelection(e) {
+    // ignore delete if editing a parameter
+    if (this.props.editableSelected) {
+      return;
+    }
     if (e.keyCode === DELETE_KEY) {
       // prioritize items over line
       // if an item is selected
@@ -227,7 +229,7 @@ export function CanvasContainer(props) {
     // padding on top and below to look extra good
     <div className="p-2 flex-grow-1 canvas-container no-margin"> 
       <Padding/>
-      <Canvas models={props.models} selected={props.selected} select={props.select} update={props.update} remove={props.remove}/>
+      <Canvas models={props.models} editableSelected={props.editableSelected} selected={props.selected} select={props.select} update={props.update} remove={props.remove}/>
       <Padding/>
     </div>
   );

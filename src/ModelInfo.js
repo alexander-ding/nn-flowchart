@@ -1,4 +1,5 @@
 import React from 'react';
+import { AssertionError } from 'assert';
 
 function conv(props) {
   const squareSize = 40;
@@ -83,7 +84,12 @@ export const nodeTypes = {
         offsetY: 50, 
         defaultParameters: {
           units: 16,
-        }
+        },
+        // the function to compute the output shape given input shape and parameters
+        shapeOut: (parameters, shapeIn) => {
+          // needs to have shape (batch_size, num)
+          return [shapeIn[0], parameters["units"]];
+        },
     },
     "conv": {
         name: "Conv",
@@ -95,7 +101,10 @@ export const nodeTypes = {
           filters: 8,
           kernelSize: [3,3], // could be both tuple or int. ndim needs to match with stride
           stride: 1, // could be both tuple or int
-        }
+        },
+        shapeOut: (parameters, shapeIn) => {
+          return [10, 2]; // TODO
+        },
     },
     "input": {
       name: "Input",
@@ -105,7 +114,14 @@ export const nodeTypes = {
       offsetY: 15,
       defaultParameters: {
         data: "MNIST",
-      }
+        batchSize: 25,
+      },
+      shapeOut: (parameters, shapeIn) => {
+        if (parameters["data"] === "MNIST") {
+          return [parameters["batchSize"], 100, 100, 3];
+        }
+        return [parameters["batchSize"], 100, 100, 3];
+      },
     },
     "output": {
       name: "Output",
@@ -113,7 +129,11 @@ export const nodeTypes = {
       svg: output,
       offsetX: 10,
       offsetY: 40,
-      defaultParameters: {}
+      defaultParameters: {},
+      shapeOut: (parameters, shapeIn) => {
+        // keep shape the same
+        return shapeIn;
+      },
     },
     "relu": {
       name: "ReLU",

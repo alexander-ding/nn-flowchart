@@ -52,6 +52,11 @@ function isCyclicHelper(models, index, visited, inRecursionStack) {
 }
 
 export function isLinear(models) {
+  /* checks if the model current makes sense:
+   * all nodes cannot have > 1 incoming edge
+   * input node cannot have incoming edge
+   * output node cannot have outgoing edge
+   */ 
   let numIncomingEdges = {};
   for (const key of Object.keys(models)) {
     numIncomingEdges[key] = 0;
@@ -66,16 +71,35 @@ export function isLinear(models) {
 
   // the input node must not have incoming edges
   if (numIncomingEdges[0] !== 0) {
-    return false;
+    return {ok: false, err: "Input node cannot have incoming edge"};
   }
   // the output node must not have outgoing edges
   if (models[1].connectedTo !== null) {
-    return false; 
+    return {ok: false, err: "Output node cannot have outgoing edge"}; 
   }
   for (const key of Object.keys(models)) {
     if (numIncomingEdges[key] > 1) {
-      return false;
+      return {"ok": false, err:"No node can have more than one incoming edge"};
     }
   }
-  return true;
+  return {"ok": true, err:""};
+}
+
+export function prev(models, id) {
+  /* Returns id of the node linking to the model pointed 
+   * to by the id, if any; if none, return null 
+   */
+  for (const key of Object.keys(models)) {
+    if (models[key].connectedTo === id) {
+      return key;
+    }
+  }
+  return null;
+}
+
+export function isTrainable(models) {
+  /* Is the current architecture trainable? */
+  if (isLinear(models)) {
+    return {ok:false, err: "Model has problem with"};
+  }
 }

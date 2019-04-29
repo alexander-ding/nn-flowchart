@@ -111,14 +111,14 @@ class EditElements extends React.Component {
 }
 
 function TrainElements(propOri) {
-  // const props = propOri
+  const props = propOri.props;
   return (
     <React.Fragment>
       <p>Inputs</p>
       <Button>Some button for it</Button>
 
       <p>Model</p>
-      <Button>Train on Cloud</Button>
+      <Button onClick={props.trainCloud}>Train on Cloud</Button>
       <Button>Generate Link</Button>
       <Button>Export</Button>
     </React.Fragment>

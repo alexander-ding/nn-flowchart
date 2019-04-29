@@ -20,25 +20,41 @@ class EditableLine extends React.Component {
       valueChanged: false,
       currentValue: null,
     };
-    // handles both: 
+    // handles: 
+    // onFocus -- reports to parent that editable is selected
     // onChange -- updates and stores internal value
-    // onBlur -- callbacks to update the model
+    // onBlur -- callbacks to update the model and reset the internal state
+    this.onFocus = () => this.props.setEditableSelected(true);
     this.onChange = this.onChange.bind(this);
+    this.onBlur = (value) => {
+      this.setState({
+        valueChanged: false,
+        currentValue: null,
+      });
+      this.props.setEditableSelected(false);
+      this.props.callback(this.props.paraName, value);
+    };
   }
 
   onChange(event) {
-    this.setState({
-      valueChanged: true,
-      currentValue: event.target.value,
-    });
+    const value = event.target.value;
+
+    if (value) {
+      this.setState({
+        valueChanged: true,
+        currentValue: value,
+      });
+    }
   }
 
   render() {
-    const value = (this.state.valueChanged ? this.state.currentValue : this.props.value);
+    const oldValue = this.props.parameters[this.props.paraName];
+    const value = (this.state.valueChanged ? this.state.currentValue : oldValue);
+
     return (
       <div className="parameter-line">
         <div className="parameter-name">{this.props.name}</div>
-        <input className="parameter-input" onBlur={() => this.props.callback(value)} onChange={this.onChange} value={value}></input>
+        <input className="parameter-input" onFocus={this.onFocus} onBlur={() => this.onBlur(value)} onChange={this.onChange} value={value}></input>
       </div>
     )
   }
@@ -55,16 +71,30 @@ function Parameters(props) {
     case "dense":
       return (
         <React.Fragment>
-        <EditableLine name="Units" callback={(value) => props.callback("units" , value)} value={model.parameters["units"]}/>
+          <EditableLine name="Units" paraName="units" setEditableSelected={props.setEditableSelected} parameters={model.parameters} callback={props.callback}/>
         </React.Fragment>
       );
+    case "conv":
+      return (
+        <React.Fragment>
+          <EditableLine name="Filters" paraName="filters" setEditableSelected={props.setEditableSelected} parameters={model.parameters} callback={props.callback}/>
+          <EditableLine name="Kernel Size" paraName="kernelSize" setEditableSelected={props.setEditableSelected} parameters={model.parameters} callback={props.callback}/>
+          <EditableLine name="Stride" paraName="stride" setEditableSelected={props.setEditableSelected} parameters={model.parameters} callback={props.callback}/>
+        </React.Fragment>
+      )
+    case "input":
+      return (
+        <React.Fragment>
+          <EditableLine name="Batch Size" paraName="batchSize" setEditableSelected={props.setEditableSelected} parameters={model.parameters} callback={props.callback}/>
+        </React.Fragment>
+      )
     default:
       return null;
   }
 }
 
 export function Toolbar(props) {
-  const model = props.model;
+  const model = (props.selected === -1) ? null : props.models[props.selected];
   let type = "N/A";
   let activation = "N/A";
   let incomingShape = "N/A";
@@ -72,8 +102,11 @@ export function Toolbar(props) {
 
   // set the values if model is selected
   if (model !== null) {
+    // find a predecessor, if any
     type = nodeTypes[model.type].name;
     activation = (model.activation === null) ? "None" : nodeTypes[model.activation].name;
+    incomingShape = (model.shapeIn === null ? "N/A" : String(model.shapeIn));
+    outgoingShape = (model.shapeOut === null ? "N/A" : String(model.shapeOut));
   }
   return (
     <nav className="p-2 no-margin" id="toolbar">
@@ -91,7 +124,7 @@ export function Toolbar(props) {
         </div>
         <div className="right-line">
           <p>Parameters</p>
-          <Parameters model={model} callback={props.update}/>
+          <Parameters model={model} callback={props.update} setEditableSelected={props.setEditableSelected}/>
         </div>
       </div>
     </nav>
