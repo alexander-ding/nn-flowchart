@@ -3,8 +3,9 @@ import {Sidebar} from "./Sidebar.js";
 import {CanvasContainer} from "./Canvas.js";
 import {Toolbar} from "./Toolbar.js";
 import {ErrorBox} from "./ErrorBox.js";
-import {isCyclic, isLinear} from "./Utils.js";
+import {isCyclic, isLinear, isTrainable} from "./Utils.js";
 import {nodeTypes} from "./ModelInfo.js";
+import cloneDeep from 'lodash/cloneDeep';
 import './App.css';
 
 export class App extends React.Component {
@@ -46,7 +47,7 @@ export class App extends React.Component {
       shapeIn: null, // dependent
       shapeOut: null, // dependent
       activation: null,
-      parameters: nodeTypes[type].defaultParameters,
+      parameters: cloneDeep(nodeTypes[type].defaultParameters),
     };
   }
 
@@ -141,7 +142,6 @@ export class App extends React.Component {
     /* given a dict of properties to update ((name, value) pairs)
      * updates the parameters of the model of the given id
      */
-
     // copy the model
     const model = {...this.state.models[id]};
 
@@ -191,19 +191,37 @@ export class App extends React.Component {
 
   trainCloud() {
     // first check if the model is linear
-    if (!isLinear(this.state.models)) {
+    const models = this.updateDependents(this.state.models);
+    this.setState({
+      models: models,
+    })
+    const resp = isTrainable(models);
+    if (!resp["ok"]) {
+      this.setError(resp["err"], true);
       return;
     }
-    const serializedModel = JSON.stringify(this.state.models);
-    const response = fetch('localhost:8000', {
+    const serializedModel = JSON.stringify({
+      modelJSON: JSON.stringify(models),
+    });
+    fetch('http://localhost:5000/api/Architecture', {
       method: 'POST',
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
       },
       body: serializedModel
-    }).then(response => response.json())
-    .catch(e => this.setError("Cannot reach server", true));
+    }).then(response => {
+      if (response.status === 201) {
+        return response.json();
+      } else {
+        throw new Error("Something went wrong");
+      }
+    }).then((responseJSON) => {
+      console.log(responseJSON);
+    }).catch(e => {
+      this.setError(e.message, true);
+    });
+    
 
     this.setState({
       training: true,

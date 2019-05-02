@@ -69,9 +69,16 @@ function output(props) {
   </React.Fragment>
 }
 
+// redo visual another day yeah? TODO
 function relu(x, y) {
   return (
     <text x={x} y={y} fontSize="14">ReLU</text>
+  )
+}
+
+function sigmoid(x, y) {
+  return (
+    <text x={x} y={y} fontSize="10">Sigmoid</text>
   )
 }
 
@@ -87,7 +94,6 @@ export const nodeTypes = {
         },
         // the function to compute the output shape given input shape and parameters
         shapeOut: (parameters, shapeIn) => {
-          // needs to have shape (batch_size, num)
           return [shapeIn[0], parameters["units"]];
         },
     },
@@ -118,7 +124,7 @@ export const nodeTypes = {
       },
       shapeOut: (parameters, shapeIn) => {
         if (parameters["data"] === "MNIST") {
-          return [parameters["batchSize"], 100, 100, 3];
+          return [parameters["batchSize"], 28, 28];
         }
         return [parameters["batchSize"], 100, 100, 3];
       },
@@ -129,10 +135,14 @@ export const nodeTypes = {
       svg: output,
       offsetX: 10,
       offsetY: 40,
-      defaultParameters: {},
+      defaultParameters: {
+        data: "MNIST",
+      },
       shapeOut: (parameters, shapeIn) => {
         // keep shape the same
-        return shapeIn;
+        if (parameters["data"] === "MNIST") {
+          return [shapeIn[shapeIn.length-1], 10]; // will change later
+        }
       },
     },
     "relu": {
@@ -140,8 +150,14 @@ export const nodeTypes = {
       type: "activation",
       svg: relu,
       defaultParameters: {}
+    },
+    "sigmoid": {
+      name: "Sigmoid",
+      type: "activation",
+      svg: sigmoid,
+      defaultParameters: {}
     }
 };
 
 export const layerNames = ["dense", "conv"];
-export const activationNames = ["relu"];
+export const activationNames = ["relu", "sigmoid"];

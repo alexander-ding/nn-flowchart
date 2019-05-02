@@ -99,7 +99,27 @@ export function prev(models, id) {
 
 export function isTrainable(models) {
   /* Is the current architecture trainable? */
-  if (isLinear(models)) {
-    return {ok:false, err: "Model has problem with"};
+  const resp = isLinear(models);
+  // if not linear, then fail
+  if (!resp["ok"]) {
+    return resp;
   }
+  if (isCyclic(models)) {
+    return {ok: false, err: "Model cannot be cyclic"};
+  }
+
+  // output node must not be empty, 
+  // have ndim = 2, and agree with batch size
+  if (models[1].shapeIn === null || models[1].shapeOut.length !== 2 || models[1].shapeOut[0] !== models[0].parameters["batchSize"]) {
+    return {ok: false, err: "Output node must have shape (batchSize, categories)"};
+  }
+
+  let currentNode = models[0]; // input node
+  while (currentNode.ID !== 1) { // need to reach output node
+    if (currentNode.connectedTo === null) {
+      return {ok: false, err: "Model does not cannot from input node to output node"};
+    }
+    currentNode = models[currentNode.connectedTo];
+  }
+  return {ok: true, err: ""};
 }
