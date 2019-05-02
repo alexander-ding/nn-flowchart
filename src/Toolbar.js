@@ -103,6 +103,7 @@ export function Toolbar(props) {
           </div>
           <div className="middle-line">
             <p>Train Information</p>
+            
           </div>
         </div>
       </nav>
