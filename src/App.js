@@ -15,13 +15,21 @@ export class App extends React.Component {
     this.state = {
       models: { // represent the architecture
         0: this._model("input", 0, 20, 50),
-        1: this._model("output", 1, 300, 50)
+        1: this._model("output", 1, 300, 50),
+      },
+      modelInfo: {
+        epochs: "10",
+        // loss
+        // optimizer
       },
       selected: 0, // selected node;
       nextID: 2, // the ID for the next new layer; incremented as model grows
       errorMsg: null, // error message
       errorOnce: true, // is the error one-time or persistent?
       training: false, // whether the model is being trained on cloud
+      trainingInfo: {
+        
+      },
       editableSelected: false, // whether an editable element of the toolbar is selected
     };
 
@@ -33,6 +41,7 @@ export class App extends React.Component {
     this.setError = this.setError.bind(this);
     this.trainCloud = this.trainCloud.bind(this);
     this.setEditableSelected = this.setEditableSelected.bind(this);
+    this.updateModelInfo = this.updateModelInfo.bind(this);
   }
 
   
@@ -139,7 +148,7 @@ export class App extends React.Component {
   }
 
   updateParameters(id, name, value) {
-    /* given a dict of properties to update ((name, value) pairs)
+    /* given a name and a value
      * updates the parameters of the model of the given id
      */
     // copy the model
@@ -175,6 +184,14 @@ export class App extends React.Component {
     });
   }
 
+  updateModelInfo(name, value) {
+    let modelInfo = this.state.modelInfo
+    modelInfo[name] = value;
+    this.setState({
+      modelInfo: modelInfo,
+    });
+  }
+
   setError(err, once) {
     /* sets the error message */
     this.setState({
@@ -201,7 +218,7 @@ export class App extends React.Component {
       return;
     }
     const serializedModel = JSON.stringify({
-      modelJSON: JSON.stringify(models),
+      modelJSON: JSON.stringify({model: models, batchSize: models[0].parameters.batchSize, epochs: this.state.modelInfo['epochs']}),
     });
     fetch('http://localhost:5000/api/Architecture', {
       method: 'POST',
@@ -236,7 +253,7 @@ export class App extends React.Component {
           <Sidebar models={this.state.models} selected={this.state.selected} newModel={this.newModel} setError={this.setError} update={this.updateModel} trainCloud={this.trainCloud}/>
           <div className="d-flex w-100 p-2 flex-column flex-grow-1 no-margin" ref="canvasContainer">
             <CanvasContainer models={this.state.models} selected={this.state.selected} select={this.selectModel} update={this.updateModel} remove={this.removeModel} editableSelected={this.state.editableSelected}/>
-            <Toolbar selected={this.state.selected} models={this.state.models} update={(name, value) => this.updateParameters(this.state.selected, name, value)} setEditableSelected={this.setEditableSelected}/>
+            <Toolbar modelInfo={this.state.modelInfo} updateModelInfo={this.updateModelInfo} selected={this.state.selected} models={this.state.models} update={(name, value) => this.updateParameters(this.state.selected, name, value)} setEditableSelected={this.setEditableSelected}/>
           </div>
           
         </div>

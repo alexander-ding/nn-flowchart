@@ -141,7 +141,7 @@ export const nodeTypes = {
       shapeOut: (parameters, shapeIn) => {
         // keep shape the same
         if (parameters["data"] === "MNIST") {
-          return [shapeIn[shapeIn.length-1], 10]; // will change later
+          return [shapeIn[0], 10]; // will change later
         }
       },
     },

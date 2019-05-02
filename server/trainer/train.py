@@ -9,7 +9,7 @@ class Trainer:
     def __init__(self):
         self.sessions = {} # training sessions ongoing
 
-    def new_session(self, model):
+    def new_session(self, data):
         """ Generates a new session with random key
         """
         # avoid collision
@@ -17,8 +17,7 @@ class Trainer:
         while (key in self.sessions.keys()):
             key = new_key()
 
-        self.sessions[key] = Session(model)
-        self.sessions[key].train()
+        self.sessions[key] = Session(key, data)
         return key
     
     def kill_session(self, key):

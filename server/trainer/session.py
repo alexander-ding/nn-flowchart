@@ -18,10 +18,12 @@ class EarlyStopper(Callback):
             self.model.stop_training = True
 
 class Session:
-    def __init__(self, model):
-        self.model = model
+    def __init__(self, id, data):
+        self.id = id
+        self.model = data['model']
         self.compiled_model = None
-        self.batch_size = None
+        self.batch_size = int(data['batchSize'])
+        self.epochs = int(data['epochs'])
         self.num_classes = None
         self.dataset = None # name of dataset
         self.data_loaded = False # is training data loaded
@@ -34,6 +36,7 @@ class Session:
         self.progress = 0.0 # 0.0 to 1.0
         self.test_accuracy = 0.0 # 0.0 to 1.0
         self.killed = False # whether the training is killed
+        self.train()
     
     def compile_model(self):
         model = self.model
@@ -82,9 +85,12 @@ class Session:
         """
         def thread_function():
             with tf.Session(graph=tf.Graph()) as sess:
+                print("Session {}: compiling model".format(self.id))
                 K.set_session(sess)
                 self.compile_model()
+
                 # loads data
+                print("Session {}: loading and preprocessing data".format(self.id))
                 if self.dataset == "MNIST":
                     (x_train, y_train), (x_test, y_test) = mnist.load_data()
                 
@@ -92,7 +98,7 @@ class Session:
                 x_train = x_train.astype("float32") / 255
                 x_test = x_test.astype("float32") / 255
 
-                epochs = 5
+                epochs = self.epochs
                 batch_size = self.batch_size
                 num_classes = self.num_classes
                 y_train = keras.utils.to_categorical(y_train, num_classes)
@@ -117,13 +123,14 @@ class Session:
                     self.trained = True
                 
                 cb = LambdaCallback(on_batch_end=update_progress, on_train_end=training_end, on_epoch_end=epoch_end)
-
+                print("Session {}: training".format(self.id))
                 self.compiled_model.fit(x_train, y_train,
                                         batch_size=batch_size,
                                         epochs=epochs,
                                         callbacks=[cb, EarlyStopper(self)],
                                         verbose=0)
 
+                print("Session {}: evaluating".format(self.id))
         t = threading.Thread(target=thread_function)
         t.start()
         self.thread = t

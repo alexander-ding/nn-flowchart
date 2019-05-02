@@ -26,9 +26,9 @@ class Train(db.Model):
     sessionID = db.Column(db.TEXT()) # sessionID in service
     done = db.Column(db.Boolean, default=False)
 
-    def __init__(self, modelID, model):
+    def __init__(self, modelID, sessionID):
         self.modelID = modelID
-        self.sessionID = trainer.new_session(model)
+        self.sessionID = sessionID
 
 class TrainSchema(ma.Schema):
     id = fields.Integer()

@@ -39,12 +39,10 @@ class EditableLine extends React.Component {
   onChange(event) {
     const value = event.target.value;
 
-    if (value) {
-      this.setState({
-        valueChanged: true,
-        currentValue: value,
-      });
-    }
+    this.setState({
+      valueChanged: true,
+      currentValue: value,
+    });
   }
 
   render() {
@@ -94,20 +92,28 @@ function Parameters(props) {
 }
 
 export function Toolbar(props) {
-  const model = (props.selected === -1) ? null : props.models[props.selected];
-  let type = "N/A";
-  let activation = "N/A";
-  let incomingShape = "N/A";
-  let outgoingShape = "N/A";
-
-  // set the values if model is selected
-  if (model !== null) {
-    // find a predecessor, if any
-    type = nodeTypes[model.type].name;
-    activation = (model.activation === null) ? "None" : nodeTypes[model.activation].name;
-    incomingShape = (model.shapeIn === null ? "N/A" : String(model.shapeIn));
-    outgoingShape = (model.shapeOut === null ? "N/A" : String(model.shapeOut));
+  if (props.selected === -1) {
+    const modelInfo = props.modelInfo
+    return (
+      <nav className="p-2 no-margin" id="toolbar">
+        <div id="toolbar-container">
+          <div className="left-line">
+            <p>Model Information</p>
+            <EditableLine name="Epochs" paraName="epochs" setEditableSelected={()=>null} parameters={modelInfo} callback={props.updateModelInfo}/>
+          </div>
+          <div className="middle-line">
+            <p>Train Information</p>
+          </div>
+        </div>
+      </nav>
+    )
   }
+  const model = props.models[props.selected];
+
+  const type = nodeTypes[model.type].name;
+  const activation = (model.activation === null) ? "None" : nodeTypes[model.activation].name;
+  const incomingShape = (model.shapeIn === null ? "N/A" : String(model.shapeIn));
+  const outgoingShape = (model.shapeOut === null ? "N/A" : String(model.shapeOut));
   return (
     <nav className="p-2 no-margin" id="toolbar">
       <div id="toolbar-container">

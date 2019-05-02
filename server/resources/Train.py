@@ -20,9 +20,10 @@ class TrainResource(Resource):
         if architecture is None:
             return {"message": "ID not found in database"}, 404
         # extract model
-        model = architecture_schema.dump(architecture).data
+        data = architecture_schema.dump(architecture).data
         try:
-            train = Train(modelID=id, model=loads(model["modelJSON"]))
+            session_id = trainer.new_session(loads(data["modelJSON"]))
+            train = Train(modelID=id, sessionID=session_id)
         except Exception as e:
             return {"message": str(e)}, 400
 
