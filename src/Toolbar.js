@@ -69,21 +69,21 @@ function Parameters(props) {
     case "dense":
       return (
         <React.Fragment>
-          <EditableLine name="Units" paraName="units" setEditableSelected={props.setEditableSelected} parameters={model.parameters} callback={props.callback}/>
+          <EditableLine name="Units" paraName="units" setEditableSelected={props.setEditableSelected} parameters={model.parameters} callback={(n,v)=>props.callback(n,v,false)}/>
         </React.Fragment>
       );
     case "conv":
       return (
         <React.Fragment>
-          <EditableLine name="Filters" paraName="filters" setEditableSelected={props.setEditableSelected} parameters={model.parameters} callback={props.callback}/>
-          <EditableLine name="Kernel Size" paraName="kernelSize" setEditableSelected={props.setEditableSelected} parameters={model.parameters} callback={props.callback}/>
-          <EditableLine name="Stride" paraName="stride" setEditableSelected={props.setEditableSelected} parameters={model.parameters} callback={props.callback}/>
+          <EditableLine name="Filters" paraName="filters" setEditableSelected={props.setEditableSelected} parameters={model.parameters} callback={(n,v)=>props.callback(n,v,false)}/>
+          <EditableLine name="Kernel Size" paraName="kernelSize" setEditableSelected={props.setEditableSelected} parameters={model.parameters} callback={(n,v)=>props.callback(n,v,true)}/>
+          <EditableLine name="Stride" paraName="stride" setEditableSelected={props.setEditableSelected} parameters={model.parameters} callback={(n,v)=>props.callback(n,v,true)}/>
         </React.Fragment>
       )
     case "input":
       return (
         <React.Fragment>
-          <EditableLine name="Batch Size" paraName="batchSize" setEditableSelected={props.setEditableSelected} parameters={model.parameters} callback={props.callback}/>
+          <EditableLine name="Batch Size" paraName="batchSize" setEditableSelected={props.setEditableSelected} parameters={model.parameters} callback={(n,v)=>props.callback(n,v,false)}/>
         </React.Fragment>
       )
     default:
@@ -93,7 +93,12 @@ function Parameters(props) {
 
 export function Toolbar(props) {
   if (props.selected === -1) {
-    const modelInfo = props.modelInfo
+    const modelInfo = props.modelInfo;
+    const trainingInfo = props.trainingInfo;
+    const loss = (trainingInfo.loss === null) ? "N/A" : trainingInfo.loss;
+    const accuracy = (trainingInfo.accuracy === null) ? "N/A" : trainingInfo.accuracy;
+    const testAccuracy = (trainingInfo.testAccuracy === null) ? "N/A" : trainingInfo.testAccuracy;
+    const progress = (trainingInfo.progress === null) ? "0.0%" : trainingInfo.progress;
     return (
       <nav className="p-2 no-margin" id="toolbar">
         <div id="toolbar-container">
@@ -103,7 +108,14 @@ export function Toolbar(props) {
           </div>
           <div className="middle-line">
             <p>Train Information</p>
-            
+            <DisplayLine name="Training" value={String(trainingInfo.training)}/>
+            <DisplayLine name="Progress" value={progress}/>
+          </div>
+          <div className="right-line">
+            <br></br>
+            <DisplayLine name="Accuracy" value={accuracy}/>
+            <DisplayLine name="Loss" value={loss}/>
+            <DisplayLine name="Test Acc" value={testAccuracy}/>
           </div>
         </div>
       </nav>

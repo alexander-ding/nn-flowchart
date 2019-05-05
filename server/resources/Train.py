@@ -1,7 +1,7 @@
 from flask import request
 from flask_restful import Resource
-from Model import db, Architecture, ArchitectureSchema, Train, TrainSchema
-from trainer import trainer
+from ..Model import db, Architecture, ArchitectureSchema, Train, TrainSchema
+from ..trainer import trainer
 from json import loads
 
 architecture_schema = ArchitectureSchema()
@@ -45,9 +45,10 @@ class TrainResource(Resource):
         resp = {"accuracy": round(s.accuracy * 1000)/1000, 
                 "progress": s.progress,
                 "trained": s.trained,
-                "test_accuracy": s.test_accuracy}
+                "test_accuracy": s.test_accuracy,
+                "loss": str(s.loss)}
 
-        return resp, 500
+        return resp, 200
     
     def delete(self):
         """ Deletes session given session id """

@@ -1,3 +1,3 @@
-from trainer.train import Trainer
+from .train import Trainer
 
 trainer = Trainer()

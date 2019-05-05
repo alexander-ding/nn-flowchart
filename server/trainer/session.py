@@ -35,6 +35,7 @@ class Session:
         self.accuracy = 0.0 # 0.0 to 1.0
         self.progress = 0.0 # 0.0 to 1.0
         self.test_accuracy = 0.0 # 0.0 to 1.0
+        self.loss = 0.0 # current loss
         self.killed = False # whether the training is killed
         self.train()
     
@@ -48,7 +49,6 @@ class Session:
 
         # do middle layers
         layer = input_layer
-        layer = Flatten()(layer) # for now
         while (latest_model['type'] != 'output'):
             # get next layer in model
             latest_model = model[str(latest_model['connectedTo'])]
@@ -56,7 +56,10 @@ class Session:
             # add layer to Keras model
             para = latest_model['parameters']
             if (latest_model['type'] == 'dense'):
+                layer = Flatten()(layer)
                 layer = Dense(para['units'], activation=latest_model['activation'])(layer)
+            elif (latest_model['type'] == 'conv'):
+                layer = Conv2D(filters=para['filters'], kernel_size=para['kernelSize'], strides=para['stride'], activation=latest_model['activation'])(layer)
             elif (latest_model['type'] == "output"):
                 layer = Dense(latest_model['shapeOut'][-1], activation='softmax')(layer)
         self.num_classes = latest_model['shapeOut'][-1]
@@ -93,8 +96,11 @@ class Session:
                 print("Session {}: loading and preprocessing data".format(self.id))
                 if self.dataset == "MNIST":
                     (x_train, y_train), (x_test, y_test) = mnist.load_data()
+                    x_train = x_train.reshape(x_train.shape[0], x_train.shape[1], x_train.shape[2], 1)
+                    x_test = x_test.reshape(x_test.shape[0], x_test.shape[1], x_test.shape[2], 1)
                 
                 # preprocess
+                
                 x_train = x_train.astype("float32") / 255
                 x_test = x_test.astype("float32") / 255
 
@@ -103,7 +109,6 @@ class Session:
                 num_classes = self.num_classes
                 y_train = keras.utils.to_categorical(y_train, num_classes)
                 y_test = keras.utils.to_categorical(y_test, num_classes)
-
                 # now data is ready
                 self.data_loaded = True
                 batches_per_epoch = x_train.shape[0]//batch_size
@@ -113,24 +118,27 @@ class Session:
                     self.corrects += int(logs.get('acc') * batch_size)
                     self.all += batch_size
                     self.accuracy = self.corrects / self.all
+                    self.loss = logs.get('loss')
 
                 def epoch_end(epoch, logs={}):
                     self.current_epoch += 1
                     self.corrects = 0
                     self.all = 0
                 
-                def training_end(logs={}):
-                    self.trained = True
-                
-                cb = LambdaCallback(on_batch_end=update_progress, on_train_end=training_end, on_epoch_end=epoch_end)
+                cb = LambdaCallback(on_batch_end=update_progress, on_epoch_end=epoch_end)
                 print("Session {}: training".format(self.id))
                 self.compiled_model.fit(x_train, y_train,
                                         batch_size=batch_size,
                                         epochs=epochs,
                                         callbacks=[cb, EarlyStopper(self)],
                                         verbose=0)
-
+                
                 print("Session {}: evaluating".format(self.id))
+                _, acc = self.compiled_model.evaluate(x_test, y_test,
+                                            batch_size=batch_size, 
+                                            verbose=0)
+                self.test_accuracy = acc
+                self.trained = True
         t = threading.Thread(target=thread_function)
         t.start()
         self.thread = t

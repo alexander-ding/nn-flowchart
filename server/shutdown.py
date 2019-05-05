@@ -1,5 +1,5 @@
-from Model import db, Train
-from trainer import trainer
+from .Model import db, Train
+from .trainer import trainer
 from flask import request
 
 def at_shutdown(app):

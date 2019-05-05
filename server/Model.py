@@ -2,7 +2,6 @@ from flask import Flask
 from marshmallow import Schema, fields, pre_load, validate
 from flask_marshmallow import Marshmallow
 from flask_sqlalchemy import SQLAlchemy
-from trainer import trainer
 
 ma = Marshmallow()
 db = SQLAlchemy()
@@ -35,3 +34,27 @@ class TrainSchema(ma.Schema):
     modelID = fields.Integer(required=True)
     sessionID = fields.String(required=True)
     done = fields.Boolean()
+
+class Link(db.Model):
+    __tablename__ = "link"
+    id = db.Column(db.Integer, primary_key=True)
+    modelID = db.Column(db.Integer)
+    link = db.Column(db.TEXT(), unique=True)
+
+    def new_key(self, N=10):
+        import random
+        import string
+        return ''.join(random.choices(string.ascii_uppercase + string.digits, k=N))
+
+    def __init__(self, modelID):
+        self.modelID = modelID
+        links = [l[0] for l in Link.query.with_entities(Link.link).all()]
+        link = self.new_key()
+        while link in links:
+            link = self.new_key()
+        self.link = link
+
+class LinkSchema(ma.Schema):
+    id = fields.Integer()
+    modelID = fields.Integer(required=True)
+    link = fields.String()

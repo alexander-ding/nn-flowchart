@@ -1,0 +1,33 @@
+.select-model-container {
+    height: 100%;
+    width: 100%;
+    padding: 5%;
+    position: fixed;
+    background-color: rgba(0,0,0,0.7);
+    text-align: center;
+    color: #9fb0ce;
+}
+
+.model-container {
+    width: 100%;
+    height: 60%;
+    display: flex;
+}
+.model-new {
+    width: 48%;
+    height: 100%;
+    padding: 3%;
+    background-color:rgba(0,0,0,0.3);
+    float: left;
+}
+.model-blocker {
+    width: 4%;
+    float: left;
+}
+.model-load {
+    width: 48%;
+    height: 100%;
+    padding: 3%;
+    background-color:rgba(0,0,0,0.3);
+    float: right;
+}

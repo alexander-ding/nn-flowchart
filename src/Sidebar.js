@@ -112,15 +112,18 @@ class EditElements extends React.Component {
 
 function TrainElements(propOri) {
   const props = propOri.props;
+  const trainButton = (!props.trainingInfo["training"]) ? 
+                 <Button onClick={props.trainCloud}>Train on Cloud</Button> : 
+                 <Button onClick={props.cancelTrain}>Cancel</Button>
   return (
     <React.Fragment>
       <p>Inputs</p>
-      <Button>Some button for it</Button>
-
+      <Button>TODO</Button>
+      
       <p>Model</p>
-      <Button onClick={props.trainCloud}>Train on Cloud</Button>
+      {trainButton}
       <Button>Generate Link</Button>
-      <Button>Export</Button>
+      <Button>TODO-EXPORT</Button>
     </React.Fragment>
   )
 }

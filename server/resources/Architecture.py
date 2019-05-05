@@ -1,6 +1,6 @@
 from flask import request
 from flask_restful import Resource
-from Model import db, Architecture, ArchitectureSchema
+from ..Model import db, Architecture, ArchitectureSchema
 
 architecture_schema = ArchitectureSchema()
 

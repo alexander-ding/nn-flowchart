@@ -1,4 +1,4 @@
-from trainer.session import Session
+from .session import Session
 import random
 import string
 

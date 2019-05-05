@@ -1,5 +1,4 @@
 import React from 'react';
-import { AssertionError } from 'assert';
 
 function conv(props) {
   const squareSize = 40;
@@ -93,7 +92,10 @@ export const nodeTypes = {
           units: 16,
         },
         // the function to compute the output shape given input shape and parameters
-        shapeOut: (parameters, shapeIn) => {
+        shapeOut: (parameters, shapeIn, setError) => {
+          if (shapeIn === null) {
+            return null;
+          }
           return [shapeIn[0], parameters["units"]];
         },
     },
@@ -108,8 +110,24 @@ export const nodeTypes = {
           kernelSize: [3,3], // could be both tuple or int. ndim needs to match with stride
           stride: 1, // could be both tuple or int
         },
-        shapeOut: (parameters, shapeIn) => {
-          return [10, 2]; // TODO
+        shapeOut: (parameters, shapeIn, setError) => {
+          if (shapeIn === null) {
+            return null;
+          }
+          const batchSize = shapeIn[0];
+          const dimensions = shapeIn.slice(1, shapeIn.length-1);
+          const kernel = parameters["kernelSize"];
+          
+          const stride = (typeof(parameters["stride"]) === "number") ? Array(kernel.length).fill(parameters['stride']) : parameters["stride"];
+          const filters = parameters["filters"];
+          if (dimensions.length !== kernel.length) {
+            setError("Kernel must have the same ndim as the input dimension (without batchSize)", false);
+            return null;
+          }
+          const mapped = dimensions.map((dimension, key) => {
+            return Math.floor((dimension - kernel[key])/stride[key]);
+          });
+          return [batchSize, mapped, filters];
         },
     },
     "input": {
@@ -122,9 +140,9 @@ export const nodeTypes = {
         data: "MNIST",
         batchSize: 25,
       },
-      shapeOut: (parameters, shapeIn) => {
+      shapeOut: (parameters, shapeIn, setError) => {
         if (parameters["data"] === "MNIST") {
-          return [parameters["batchSize"], 28, 28];
+          return [parameters["batchSize"], 28, 28, 1];
         }
         return [parameters["batchSize"], 100, 100, 3];
       },
@@ -138,7 +156,10 @@ export const nodeTypes = {
       defaultParameters: {
         data: "MNIST",
       },
-      shapeOut: (parameters, shapeIn) => {
+      shapeOut: (parameters, shapeIn, setError) => {
+        if (shapeIn === null) {
+          return null;
+        }
         // keep shape the same
         if (parameters["data"] === "MNIST") {
           return [shapeIn[0], 10]; // will change later

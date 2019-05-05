@@ -3,8 +3,10 @@ import {Sidebar} from "./Sidebar.js";
 import {CanvasContainer} from "./Canvas.js";
 import {Toolbar} from "./Toolbar.js";
 import {ErrorBox} from "./ErrorBox.js";
+import {SelectModel} from "./SelectModel.js";
 import {isCyclic, isLinear, isTrainable} from "./Utils.js";
 import {nodeTypes} from "./ModelInfo.js";
+import {saveModel, startSession, updateTrain, deleteTrain} from "./Server.js";
 import cloneDeep from 'lodash/cloneDeep';
 import './App.css';
 
@@ -18,19 +20,26 @@ export class App extends React.Component {
         1: this._model("output", 1, 300, 50),
       },
       modelInfo: {
-        epochs: "10",
+        epochs: "2",
         // loss
         // optimizer
       },
       selected: 0, // selected node;
       nextID: 2, // the ID for the next new layer; incremented as model grows
       errorMsg: null, // error message
-      errorOnce: true, // is the error one-time or persistent?
-      training: false, // whether the model is being trained on cloud
+      errorOnce: false,
       trainingInfo: {
-        
+        accuracy: null,
+        testAccuracy: null,
+        loss: null,
+        progress: null,
+        training: false, // whether the model is being trained on cloud
       },
+      modelID: null, // ID of the model
+      sessionID: null, // ID of the training session
+      intervalID: null, // ID of the interval to be set
       editableSelected: false, // whether an editable element of the toolbar is selected
+      selectModelPage: true, // is it in the page selecting model or main page
     };
 
     // function bindings
@@ -38,13 +47,21 @@ export class App extends React.Component {
     this.updateModel = this.updateModel.bind(this);
     this.selectModel = this.selectModel.bind(this);
     this.removeModel = this.removeModel.bind(this);
-    this.setError = this.setError.bind(this);
-    this.trainCloud = this.trainCloud.bind(this);
+
     this.setEditableSelected = this.setEditableSelected.bind(this);
     this.updateModelInfo = this.updateModelInfo.bind(this);
+    this.setError = this.setError.bind(this);
+
+    this.trainCloud = this.trainCloud.bind(this);    
+    this.startSession = this.startSession.bind(this);
+    this.updateTrain = this.updateTrain.bind(this);
+    this.cancelTrain = this.cancelTrain.bind(this);
+    this.state["models"] = this._updateDependents(this.state.models);
+
+    this.loadDefaultModel = this.loadDefaultModel.bind(this);
+    this.loadModel = this.loadModel.bind(this);
   }
 
-  
   _model(type, id, x, y) {
     return {
       name: type + String(id),
@@ -63,20 +80,22 @@ export class App extends React.Component {
   model(type) {
     return this._model(type, this.state.nextID, 10 + Math.random() * 80, 10 + Math.random() * 80);
   }
-
   updateDependents(models) {
+    this.setError(null, false);
+    return this._updateDependents(models);
+  }
+  _updateDependents(models) {
     /* helper function to update members of nodes
      * that depend on other parts of the system 
      */
-
     // get the input model
     let inputNode = models[0];
-    inputNode.shapeOut = nodeTypes[inputNode.type].shapeOut(inputNode.parameters, null);
+    inputNode.shapeOut = nodeTypes[inputNode.type].shapeOut(inputNode.parameters, null, this.setError);
     let currentNode = inputNode;
     let nextNode = models[inputNode.connectedTo];
     while (currentNode.connectedTo !== null) {
       nextNode.shapeIn = currentNode.shapeOut;
-      nextNode.shapeOut = nodeTypes[nextNode.type].shapeOut(nextNode.parameters, nextNode.shapeIn);
+      nextNode.shapeOut = nodeTypes[nextNode.type].shapeOut(nextNode.parameters, nextNode.shapeIn, this.setError);
       currentNode = nextNode;
       nextNode = models[nextNode.connectedTo];
     }
@@ -147,7 +166,7 @@ export class App extends React.Component {
     });
   }
 
-  updateParameters(id, name, value) {
+  updateParameters(id, name, value, canTuple) {
     /* given a name and a value
      * updates the parameters of the model of the given id
      */
@@ -171,6 +190,10 @@ export class App extends React.Component {
     }
     // if tuple, set array
     if (components.length > 1) {
+      // no tuples for things that can't tuple
+      if (!canTuple) {
+        return;
+      }
       model["parameters"][name] = components;
     } else {
       model["parameters"][name] = components[0];
@@ -194,10 +217,23 @@ export class App extends React.Component {
 
   setError(err, once) {
     /* sets the error message */
-    this.setState({
-      errorMsg: err,
-      errorOnce: once,
-    });
+    if (once) {
+      this.setState({
+        errorMsg: err,
+        errorOnce: once,
+      });
+    } else {
+      // do not override one-time messages
+      if (this.state.errorOnce && this.state.errorMsg !== null) {
+        return;
+      } else {
+        this.setState({
+          errorMsg: err,
+          errorOnce: once,
+        });
+      }
+    }
+    
   }
   
   setEditableSelected(t) {
@@ -220,40 +256,83 @@ export class App extends React.Component {
     const serializedModel = JSON.stringify({
       modelJSON: JSON.stringify({model: models, batchSize: models[0].parameters.batchSize, epochs: this.state.modelInfo['epochs']}),
     });
-    fetch('http://localhost:5000/api/Architecture', {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: serializedModel
-    }).then(response => {
-      if (response.status === 201) {
-        return response.json();
-      } else {
-        throw new Error("Something went wrong");
-      }
-    }).then((responseJSON) => {
-      console.log(responseJSON);
+    saveModel(serializedModel).then((responseJSON) => {
+      let info = this.state.trainingInfo;
+      info["training"] = true;
+      this.setState({trainingInfo:info, modelID: responseJSON['data']["id"]});
+      this.selectModel(-1);
+      this.startSession(responseJSON['data']["id"]);
     }).catch(e => {
       this.setError(e.message, true);
     });
-    
+  }
 
-    this.setState({
-      training: true,
-    })
+  startSession(id) {
+    /* start training session */
+    startSession(id).then(responseJSON => {
+      const data = responseJSON['data'];
+      const intervalID = setInterval(this.updateTrain, 100);
+      this.setState({
+        sessionID: data['sessionID'],
+        intervalID: intervalID,
+      });
+    }).catch(e => {
+      this.setError(e.message, true);
+    });
+  }
+
+  updateTrain() {
+    updateTrain(this.state.sessionID).then(data => {
+      const trainingInfo = {
+        accuracy: String(Math.floor(data['accuracy']*100))+"%",
+        testAccuracy: String(Math.floor(data['test_accuracy']*100))+"%",
+        loss: Number(parseFloat(data['loss']).toFixed(3)),
+        progress: String(Math.floor(data['progress']*100))+"%",
+        training: !data['trained'], // whether the model is being trained on cloud
+      }
+      this.setState({trainingInfo: trainingInfo});
+      // stop updating if training is done
+      if (data['trained']) {
+        clearInterval(this.state.intervalID);
+      }
+    }).catch(e => {
+      this.setError(e.message, true);
+      this.cancelTrain();
+    });
+  }
+
+  cancelTrain() {
+    clearInterval(this.state.intervalID);
+    let trainingInfo = this.state.trainingInfo;
+    trainingInfo['training'] = false;
+    this.setState({trainingInfo:trainingInfo});
+    deleteTrain(this.state.sessionID);
+  }
+
+  loadModel(link) {
+
+  }
+
+  loadDefaultModel(name) {
+    switch (name) {
+      case "blank":
+        this.setState({selectModelPage: false});
+        return;
+      default:
+        return;
+    }
   }
 
   render() {
     return (
       <React.Fragment>
+        <SelectModel display={this.state.selectModelPage} loadModel={this.loadModel} loadDefaultModel={this.loadDefaultModel}></SelectModel>
         <ErrorBox errorMsg={this.state.errorMsg} dismissible={this.state.errorOnce} setError={this.setError}/>
         <div className="container-fluid d-flex h-100 flex-row no-margin">
-          <Sidebar models={this.state.models} selected={this.state.selected} newModel={this.newModel} setError={this.setError} update={this.updateModel} trainCloud={this.trainCloud}/>
+          <Sidebar models={this.state.models} selected={this.state.selected} trainingInfo={this.state.trainingInfo} newModel={this.newModel} setError={this.setError} update={this.updateModel} trainCloud={this.trainCloud} cancelTrain={this.cancelTrain}/>
           <div className="d-flex w-100 p-2 flex-column flex-grow-1 no-margin" ref="canvasContainer">
             <CanvasContainer models={this.state.models} selected={this.state.selected} select={this.selectModel} update={this.updateModel} remove={this.removeModel} editableSelected={this.state.editableSelected}/>
-            <Toolbar modelInfo={this.state.modelInfo} updateModelInfo={this.updateModelInfo} selected={this.state.selected} models={this.state.models} update={(name, value) => this.updateParameters(this.state.selected, name, value)} setEditableSelected={this.setEditableSelected}/>
+            <Toolbar modelInfo={this.state.modelInfo} trainingInfo={this.state.trainingInfo} updateModelInfo={this.updateModelInfo} selected={this.state.selected} models={this.state.models} update={(name, value, canTuple) => this.updateParameters(this.state.selected, name, value, canTuple)} setEditableSelected={this.setEditableSelected}/>
           </div>
           
         </div>
