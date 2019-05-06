@@ -122,7 +122,7 @@ function TrainElements(propOri) {
       
       <p>Model</p>
       {trainButton}
-      <Button>Generate Link</Button>
+      <Button onClick={props.getLink}>Generate Link</Button>
       <Button>TODO-EXPORT</Button>
     </React.Fragment>
   )

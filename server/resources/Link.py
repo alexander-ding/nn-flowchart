@@ -7,9 +7,8 @@ link_schema = LinkSchema()
 class LinkResource(Resource):
     def post(self):
         json_data = request.get_json(force=True)
-        if not json_data:
-            return {'message', 'No input data provided'}, 400
-        
+        if not json_data or "modelID" not in json_data.keys():
+            return {'message', 'No modelID provided'}, 400
         _, errs = link_schema.load(json_data)
         if errs:
             return errs, 402

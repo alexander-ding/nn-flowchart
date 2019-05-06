@@ -4,9 +4,10 @@ import {CanvasContainer} from "./Canvas.js";
 import {Toolbar} from "./Toolbar.js";
 import {ErrorBox} from "./ErrorBox.js";
 import {SelectModel} from "./SelectModel.js";
+import {LinkPage} from "./LinkPage.js";
 import {isCyclic, isLinear, isTrainable} from "./Utils.js";
 import {nodeTypes} from "./ModelInfo.js";
-import {saveModel, startSession, updateTrain, deleteTrain} from "./Server.js";
+import {saveModel, startSession, updateTrain, deleteTrain, generateLink} from "./Server.js";
 import cloneDeep from 'lodash/cloneDeep';
 import './App.css';
 
@@ -40,6 +41,8 @@ export class App extends React.Component {
       intervalID: null, // ID of the interval to be set
       editableSelected: false, // whether an editable element of the toolbar is selected
       selectModelPage: true, // is it in the page selecting model or main page
+      linkPage: false, // is link page on display
+      link: null, // the link for the current model
     };
 
     // function bindings
@@ -60,6 +63,8 @@ export class App extends React.Component {
 
     this.loadDefaultModel = this.loadDefaultModel.bind(this);
     this.loadModel = this.loadModel.bind(this);
+
+    this.getLink = this.getLink.bind(this);
   }
 
   _model(type, id, x, y) {
@@ -323,13 +328,39 @@ export class App extends React.Component {
     }
   }
 
+  getLink() {
+    const models = this.updateDependents(this.state.models);
+    this.setState({
+      models: models,
+    })
+    const serializedModel = JSON.stringify({
+      modelJSON: JSON.stringify({model: models, batchSize: models[0].parameters.batchSize, epochs: this.state.modelInfo['epochs']}),
+    });
+    
+    saveModel(serializedModel).then(responseJSON => {
+      generateLink(responseJSON["data"]["id"]).then( responseJSON => {
+        const link = responseJSON['data']['link'];
+        this.setState({
+          link: link,
+          linkPage: true,
+        });
+      }).catch(err => {
+        this.setError(err.message, true);
+      });
+    }).catch(err => {
+      this.setError(err.message, true);
+    });
+    
+  }
+
   render() {
     return (
       <React.Fragment>
+        <LinkPage display={this.state.linkPage} link={this.state.link} toggle={()=>this.setState({linkPage: false})}/>
         <SelectModel display={this.state.selectModelPage} loadModel={this.loadModel} loadDefaultModel={this.loadDefaultModel}></SelectModel>
         <ErrorBox errorMsg={this.state.errorMsg} dismissible={this.state.errorOnce} setError={this.setError}/>
         <div className="container-fluid d-flex h-100 flex-row no-margin">
-          <Sidebar models={this.state.models} selected={this.state.selected} trainingInfo={this.state.trainingInfo} newModel={this.newModel} setError={this.setError} update={this.updateModel} trainCloud={this.trainCloud} cancelTrain={this.cancelTrain}/>
+          <Sidebar models={this.state.models} selected={this.state.selected} trainingInfo={this.state.trainingInfo} newModel={this.newModel} setError={this.setError} update={this.updateModel} trainCloud={this.trainCloud} cancelTrain={this.cancelTrain} getLink={this.getLink}/>
           <div className="d-flex w-100 p-2 flex-column flex-grow-1 no-margin" ref="canvasContainer">
             <CanvasContainer models={this.state.models} selected={this.state.selected} select={this.selectModel} update={this.updateModel} remove={this.removeModel} editableSelected={this.state.editableSelected}/>
             <Toolbar modelInfo={this.state.modelInfo} trainingInfo={this.state.trainingInfo} updateModelInfo={this.updateModelInfo} selected={this.state.selected} models={this.state.models} update={(name, value, canTuple) => this.updateParameters(this.state.selected, name, value, canTuple)} setEditableSelected={this.setEditableSelected}/>

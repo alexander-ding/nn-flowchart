@@ -26,7 +26,6 @@ export class SelectModel extends React.Component {
     if (!this.props.display) {
       return null;
     }
-    //props.toggle();
     return (
       <div className="select-model-container">
         <h1>Load a Model</h1>

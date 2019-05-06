@@ -48,3 +48,19 @@ export function deleteTrain(sessionID) {
     body: JSON.stringify({id:sessionID}),
   });
 }
+
+export function generateLink(id) {
+  return fetch(BASE_URL+"Link", {
+    method: "POST",
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({modelID: id})
+  }).then(response => {
+    if (response.status === 201) {
+      return response.json();
+    }
+    throw new Error("Failed to generate link");
+  })
+}

@@ -1,3 +1,7 @@
 .selected {
     stroke: yellow;
 }
+
+g {
+    cursor: pointer;
+}

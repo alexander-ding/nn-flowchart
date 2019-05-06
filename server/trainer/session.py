@@ -56,11 +56,15 @@ class Session:
             # add layer to Keras model
             para = latest_model['parameters']
             if (latest_model['type'] == 'dense'):
-                layer = Flatten()(layer)
+                
+                if layer.shape.ndims > 2:
+                    layer = Flatten()(layer)
                 layer = Dense(para['units'], activation=latest_model['activation'])(layer)
             elif (latest_model['type'] == 'conv'):
                 layer = Conv2D(filters=para['filters'], kernel_size=para['kernelSize'], strides=para['stride'], activation=latest_model['activation'])(layer)
             elif (latest_model['type'] == "output"):
+                if layer.shape.ndims > 2:
+                    layer = Flatten()(layer)
                 layer = Dense(latest_model['shapeOut'][-1], activation='softmax')(layer)
         self.num_classes = latest_model['shapeOut'][-1]
         output_layer = layer
