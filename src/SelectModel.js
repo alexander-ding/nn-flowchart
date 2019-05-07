@@ -1,4 +1,3 @@
-import ReactDOM from 'react-dom';
 import React from 'react';
 import "./SelectModel.css";
 
@@ -13,10 +12,14 @@ export class SelectModel extends React.Component {
 
     this.onChange = this.onChange.bind(this);
     this.loadModel = this.loadModel.bind(this);
+    this.setError = this.setError.bind(this);
   }
 
+  setError(err) {
+    this.setState({err:err})
+  }
   loadModel() {
-    this.props.loadModel(this.link);
+    this.props.loadModel(this.state.link, this.setError);
   }
 
   onChange(e) {

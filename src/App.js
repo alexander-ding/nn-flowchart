@@ -7,7 +7,7 @@ import {SelectModel} from "./SelectModel.js";
 import {LinkPage} from "./LinkPage.js";
 import {isCyclic, isLinear, isTrainable} from "./Utils.js";
 import {nodeTypes} from "./ModelInfo.js";
-import {saveModel, startSession, updateTrain, deleteTrain, generateLink} from "./Server.js";
+import {getModel, saveModel, startSession, updateTrain, deleteTrain, generateLink, getIDFromLink} from "./Server.js";
 import cloneDeep from 'lodash/cloneDeep';
 import './App.css';
 
@@ -314,8 +314,24 @@ export class App extends React.Component {
     deleteTrain(this.state.sessionID);
   }
 
-  loadModel(link) {
-
+  loadModel(link, setError) {
+    getIDFromLink(link).then(modelID => {
+      getModel(modelID).then(modelJSON => {
+        const decoded = JSON.parse(modelJSON);
+        let modelInfo = this.state.modelInfo;
+        modelInfo['epochs'] = decoded['epochs'];
+        this.setState({
+          modelInfo: modelInfo,
+          models: decoded['model'],
+          selectModelPage: false,
+        });
+        setError(null);
+      }).catch(err => {
+        setError(err.message);
+      })
+    }).catch(err => {
+      setError(err.message);
+    });
   }
 
   loadDefaultModel(name) {
@@ -360,7 +376,7 @@ export class App extends React.Component {
         <SelectModel display={this.state.selectModelPage} loadModel={this.loadModel} loadDefaultModel={this.loadDefaultModel}></SelectModel>
         <ErrorBox errorMsg={this.state.errorMsg} dismissible={this.state.errorOnce} setError={this.setError}/>
         <div className="container-fluid d-flex h-100 flex-row no-margin">
-          <Sidebar models={this.state.models} selected={this.state.selected} trainingInfo={this.state.trainingInfo} newModel={this.newModel} setError={this.setError} update={this.updateModel} trainCloud={this.trainCloud} cancelTrain={this.cancelTrain} getLink={this.getLink}/>
+          <Sidebar models={this.state.models} selected={this.state.selected} trainingInfo={this.state.trainingInfo} newModel={this.newModel} setError={this.setError} update={this.updateModel} setSelectModelPage={() => this.setState({selectModelPage:true})} trainCloud={this.trainCloud} cancelTrain={this.cancelTrain} getLink={this.getLink}/>
           <div className="d-flex w-100 p-2 flex-column flex-grow-1 no-margin" ref="canvasContainer">
             <CanvasContainer models={this.state.models} selected={this.state.selected} select={this.selectModel} update={this.updateModel} remove={this.removeModel} editableSelected={this.state.editableSelected}/>
             <Toolbar modelInfo={this.state.modelInfo} trainingInfo={this.state.trainingInfo} updateModelInfo={this.updateModelInfo} selected={this.state.selected} models={this.state.models} update={(name, value, canTuple) => this.updateParameters(this.state.selected, name, value, canTuple)} setEditableSelected={this.setEditableSelected}/>

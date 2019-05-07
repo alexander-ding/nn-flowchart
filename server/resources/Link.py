@@ -22,8 +22,7 @@ class LinkResource(Resource):
     def get(self):
         link = request.args.get('link', -1)
         if link == -1:
-            links = [l[0] for l in Link.query.with_entities(Link.link).all()]
-            return {"links": links}, 200
+            return {'message':"No link provided"}, 400
         
         try:
             modelID = [l[0] for l in Link.query.with_entities(Link.modelID).filter_by(link=link).all()]

@@ -34,7 +34,7 @@ function CTAList() {
 function Button(props) {
   return (
     <div className="p-2 align-self-stretch button-container">
-      <button className="btn btn-dark btn-block" onClick={props.onClick}>
+      <button className="btn btn-dark btn-block" onClick={props.onClick} disabled={props.disabled}>
         {props.children}
       </button>
     </div>
@@ -72,7 +72,12 @@ class EditElements extends React.Component {
       this.props.setError("Select a layer to add the activation to first!", true);
       return;
     }
-    const selected = this.props.models[this.props.selected]
+    const selected = this.props.models[this.props.selected];
+
+    // cancel activation if model is not activation-capatible
+    if (!nodeTypes[selected.type].canActivation) {
+      return;
+    }
     // cancel the existing activation if it's the same as this
     if (selected.activation === name) {
       this.props.update(this.props.selected, {
@@ -112,18 +117,24 @@ class EditElements extends React.Component {
 
 function TrainElements(propOri) {
   const props = propOri.props;
-  const trainButton = (!props.trainingInfo["training"]) ? 
+  const isTraining = props.trainingInfo["training"];
+  const trainButton = (!isTraining) ? 
                  <Button onClick={props.trainCloud}>Train on Cloud</Button> : 
-                 <Button onClick={props.cancelTrain}>Cancel</Button>
+                 <Button onClick={props.cancelTrain}>Cancel</Button>;
   return (
     <React.Fragment>
-      <p>Inputs</p>
-      <Button>TODO</Button>
+      <p>Server</p>
+      <Button onClick={props.setSelectModelPage} disabled={isTraining}>New/Load</Button>
+      <Button onClick={props.getLink}>Generate Link</Button>
       
       <p>Model</p>
       {trainButton}
-      <Button onClick={props.getLink}>Generate Link</Button>
       <Button>TODO-EXPORT</Button>
+
+      <p>Inputs</p>
+      <Button>TODO</Button>
+      
+      
     </React.Fragment>
   )
 }

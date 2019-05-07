@@ -68,6 +68,28 @@ function output(props) {
   </React.Fragment>
 }
 
+function maxpool(props) {
+  const squareSize = 30;
+  const xInterval = squareSize / 4;
+  const yInterval = squareSize / 4;
+
+  const firstColor = "#be41f4";
+  const secondColor = "#e541f4";
+  const thirdColor = "#f95cf9";
+  let activationSVG;
+  if (props.activation != null) {
+    activationSVG = nodeTypes[props.activation].svg(xInterval*2+5, yInterval*2+squareSize-2, squareSize-10,squareSize/2 - 4);
+  } else {
+    activationSVG = null
+  }
+  return <React.Fragment>
+    <rect width={squareSize} height={squareSize} fill={firstColor}/>
+    <rect x={xInterval} y={yInterval} width={squareSize} height={squareSize} fill={secondColor}/>
+    <rect x={xInterval*2} y={yInterval*2} width={squareSize} height={squareSize} fill={thirdColor}/>
+    {activationSVG}
+  </React.Fragment>
+}
+
 // redo visual another day yeah? TODO
 function relu(x, y) {
   return (
@@ -91,6 +113,7 @@ export const nodeTypes = {
         defaultParameters: {
           units: 16,
         },
+        canActivation: true,
         // the function to compute the output shape given input shape and parameters
         shapeOut: (parameters, shapeIn, setError) => {
           if (shapeIn === null) {
@@ -110,6 +133,7 @@ export const nodeTypes = {
           kernelSize: [3,3], // could be both tuple or int. ndim needs to match with stride
           stride: 1, // could be both tuple or int
         },
+        canActivation: true,
         shapeOut: (parameters, shapeIn, setError) => {
           if (shapeIn === null) {
             return null;
@@ -127,7 +151,7 @@ export const nodeTypes = {
           const mapped = dimensions.map((dimension, key) => {
             return Math.floor((dimension - kernel[key])/stride[key]);
           });
-          return [batchSize, mapped, filters];
+          return [batchSize, ...mapped, filters];
         },
     },
     "input": {
@@ -140,12 +164,42 @@ export const nodeTypes = {
         data: "MNIST",
         batchSize: 25,
       },
+      canActivation: false,
       shapeOut: (parameters, shapeIn, setError) => {
         if (parameters["data"] === "MNIST") {
           return [parameters["batchSize"], 28, 28, 1];
         }
         return [parameters["batchSize"], 100, 100, 3];
       },
+    },
+    "maxpool": {
+      name: "Max Pool",
+      type: "layer",
+      svg: maxpool,
+      offsetX: 30,
+      offsetY: 30,
+      defaultParameters: {
+        poolSize: [2,2], // the length is dimensionality; can be between 1 to 3
+      },
+      canActivation: false,
+      shapeOut: (parameters, shapeIn, setError) => {
+        if (shapeIn === null) {
+          return null;
+        }
+        const batchSize = shapeIn[0];
+        const dimensions = shapeIn.slice(1,shapeIn.length-1);
+        const filters = shapeIn[shapeIn.length-1];
+        const poolSize = (typeof(parameters["poolSize"]) === "number") ? [parameters["poolSize"]] : parameters["poolSize"];
+        
+        if (dimensions.length !== poolSize.length) {
+          setError("PoolSize must have the same ndim as the input dimension (without batchSize)", false);
+          return null;
+        }
+        const mapped = dimensions.map((dimension, key) => {
+          return Math.floor((dimension)/poolSize[key]);
+        });
+        return [batchSize, ...mapped, filters];
+      }
     },
     "output": {
       name: "Output",
@@ -156,6 +210,7 @@ export const nodeTypes = {
       defaultParameters: {
         data: "MNIST",
       },
+      canActivation: true,
       shapeOut: (parameters, shapeIn, setError) => {
         if (shapeIn === null) {
           return null;
@@ -180,5 +235,5 @@ export const nodeTypes = {
     }
 };
 
-export const layerNames = ["dense", "conv"];
+export const layerNames = ["dense", "conv", "maxpool"];
 export const activationNames = ["relu", "sigmoid"];

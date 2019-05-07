@@ -2,7 +2,7 @@ import keras
 from keras.datasets import mnist
 from keras.models import Model
 from keras.layers import Dense, Dropout, Flatten, Input
-from keras.layers import Conv2D, MaxPooling2D, ReLU
+from keras.layers import Conv2D, MaxPooling2D, MaxPooling1D, MaxPooling3D, ReLU
 from keras.callbacks import LambdaCallback, Callback
 from keras import backend as K
 import tensorflow as tf
@@ -62,10 +62,24 @@ class Session:
                 layer = Dense(para['units'], activation=latest_model['activation'])(layer)
             elif (latest_model['type'] == 'conv'):
                 layer = Conv2D(filters=para['filters'], kernel_size=para['kernelSize'], strides=para['stride'], activation=latest_model['activation'])(layer)
+            elif (latest_model['type'] == "maxpool"):
+                # convert to list if number only
+                para['poolSize'] = para['poolSize'] if isinstance(para['poolSize'], (list, tuple)) else [para['poolSize']]
+
+                if isinstance(para['poolSize'], int):
+                    maxpool = MaxPooling1D
+                elif len(para['poolSize']) == 2:
+                    maxpool = MaxPooling2D
+                elif len(para['poolSize']) == 3:
+                    maxpool = MaxPooling3D
+                
+                layer = maxpool(pool_size=para['poolSize'])(layer)
+                
             elif (latest_model['type'] == "output"):
                 if layer.shape.ndims > 2:
                     layer = Flatten()(layer)
                 layer = Dense(latest_model['shapeOut'][-1], activation='softmax')(layer)
+            
         self.num_classes = latest_model['shapeOut'][-1]
         output_layer = layer
 

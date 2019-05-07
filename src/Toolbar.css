@@ -12,21 +12,22 @@
 
 .left-line {
     width: 30%;
-    position: relative;
     float: left;
 }
-
+.blocker {
+    width: 5%;
+    height: 100%;
+    float: left;
+}
 .middle-line {
     float: left;
-    position: relative;
-    left: 5%;
+    left: 35%;
     width: 30%;
 }
 
 .right-line {
     width: 30%;
-    position: relative;
-    left: 10%;
+    left: 70%;
     float: left;
 }
 

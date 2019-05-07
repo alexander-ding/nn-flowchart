@@ -33,6 +33,11 @@ class Canvas extends React.Component {
       y: 0, // ibid for y
       id: -1, // id of the line from which the current new line stems from
       selectedLineFromTo: [-1,-1], // selected line from node X to node Y ([X,Y])
+      dragging: -1, // -1 means no dragging
+      initX: 0,
+      initY: 0,
+      initModelX: 0,
+      initModelY: 0,
     }
 
     // some function bindings
@@ -41,6 +46,8 @@ class Canvas extends React.Component {
     this.handleBGClick = this.handleBGClick.bind(this);
     this.handleLineClick = this.handleLineClick.bind(this);
     this.deleteSelection = this.deleteSelection.bind(this);
+    this.handleDrag = this.handleDrag.bind(this);
+    this.onMouseUp = this.onMouseUp.bind(this);
   }
 
   componentDidMount() {
@@ -121,6 +128,36 @@ class Canvas extends React.Component {
       x: e.clientX - this.state.xOffset,
       y: e.clientY - this.state.yOffset,
     });
+
+    if (this.state.dragging !== -1) {
+      const newX = e.clientX + this.state.initModelX - this.state.initX;
+      const newY = e.clientY + this.state.initModelY - this.state.initY;
+      this.props.update(this.state.dragging, {
+        x: newX,
+        y: newY,
+      });
+    }
+  }
+
+  onMouseUp(e) {
+    
+    if (this.state.dragging === -1) {
+      return;
+    }
+    const dragging = this.state.dragging;
+    const dragged = this.props.models[dragging];
+
+    // reset drag
+    this.setState({
+      dragging: -1,
+    });
+    
+    const threshold = 10;
+    // if movement is small enough, consider it a click
+    if (Math.abs(dragged.x - this.state.initModelX) + Math.abs(dragged.y - this.state.initModelY) < threshold) {
+      this.props.select(dragged.ID);
+      this.handleElementClick(dragged.ID);
+    }
   }
 
   handleBGClick(e) {
@@ -172,11 +209,25 @@ class Canvas extends React.Component {
     this.props.select(-1);
   }
 
+  handleDrag(initX, initY, id) {
+    const model = this.props.models[id];
+    this.setState({
+      dragging: id,
+      initX: initX,
+      initY: initY,
+      initModelX: model.x,
+      initModelY: model.y
+    });
+    this.props.select(model.ID);
+  }
+
   render() {
     // let's do all the layers from the model first
-    const modelElements = Object.entries(this.props.models).map(([key, model]) => 
-      <Group key={model.ID} model={model} select={this.props.select} selected={this.props.selected===model.ID} update={this.props.update} isClicked={this.handleElementClick}/>
-    );
+    const modelElements = Object.entries(this.props.models).map(([key, model]) => {
+
+    
+      return <Group key={model.ID} handleDrag={this.handleDrag} model={model} selected={this.props.selected===model.ID}/>;
+    });
     
     // this part handles rendering the tentative line (if any)
     let tentativeLine = null;
@@ -202,7 +253,7 @@ class Canvas extends React.Component {
     
     return (
       // stick a rect for background
-      <svg onClick={this.handleBGClick} onMouseMove={this.trackMouse} id="canvas" width="100%" height="60%" ref="canvas">
+      <svg onClick={this.handleBGClick} onMouseMove={this.trackMouse} onMouseUp={this.onMouseUp} id="canvas" width="100%" height="60%" ref="canvas">
         <MarkerDefs/>
         <rect width="100%" height="100%" fill="#b477ec" pointerEvents="none"/>
         {modelElements}

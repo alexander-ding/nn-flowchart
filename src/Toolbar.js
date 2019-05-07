@@ -86,6 +86,12 @@ function Parameters(props) {
           <EditableLine name="Batch Size" paraName="batchSize" setEditableSelected={props.setEditableSelected} parameters={model.parameters} callback={(n,v)=>props.callback(n,v,false)}/>
         </React.Fragment>
       )
+      case "maxpool":
+      return (
+        <React.Fragment>
+          <EditableLine name="Pool Size" paraName="poolSize" setEditableSelected={props.setEditableSelected} parameters={model.parameters} callback={(n,v)=>props.callback(n,v,true)}/>
+        </React.Fragment>
+      )
     default:
       return null;
   }
@@ -106,11 +112,13 @@ export function Toolbar(props) {
             <p>Model Information</p>
             <EditableLine name="Epochs" paraName="epochs" setEditableSelected={()=>null} parameters={modelInfo} callback={props.updateModelInfo}/>
           </div>
+          <div className="blocker"></div>
           <div className="middle-line">
             <p>Train Information</p>
-            <DisplayLine name="Training" value={String(trainingInfo.training)}/>
+            <DisplayLine name="Training" value={trainingInfo.training ? "Yes" : "No"}/>
             <DisplayLine name="Progress" value={progress}/>
           </div>
+          <div className="blocker"></div>
           <div className="right-line">
             <br></br>
             <DisplayLine name="Accuracy" value={accuracy}/>
@@ -132,18 +140,20 @@ export function Toolbar(props) {
       <div id="toolbar-container">
         
         <div className="left-line">
+          <p>Parameters</p>
+          <Parameters model={model} callback={props.update} setEditableSelected={props.setEditableSelected}/>
+        </div>
+        <div className="blocker"></div>
+        <div className="middle-line">
           <p>Layer Information</p>
           <DisplayLine name="Type" value={type}/>
           <DisplayLine name="Activation" value={activation}/>
         </div>
-        <div className="middle-line">
+        <div className="blocker"></div>
+        <div className="right-line">
           <br></br>
           <DisplayLine name="Shape In" value={incomingShape}/>
           <DisplayLine name="Shape Out" value={outgoingShape}/>
-        </div>
-        <div className="right-line">
-          <p>Parameters</p>
-          <Parameters model={model} callback={props.update} setEditableSelected={props.setEditableSelected}/>
         </div>
       </div>
     </nav>
