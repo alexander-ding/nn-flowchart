@@ -11,6 +11,7 @@ export class SelectModel extends React.Component {
     }
 
     this.onChange = this.onChange.bind(this);
+    this.noChange = this.noChange.bind(this);
     this.loadModel = this.loadModel.bind(this);
     this.setError = this.setError.bind(this);
   }
@@ -25,12 +26,18 @@ export class SelectModel extends React.Component {
   onChange(e) {
     this.setState({link:e.target.value});
   }
+  noChange(e) {
+    if (e.target.id === "background-model-select" || e.target.id === "model-blocker") {
+      this.props.toggle();
+    }
+    
+  }
   render() {
     if (!this.props.display) {
       return null;
     }
     return (
-      <div className="select-model-container">
+      <div id="background-model-select" onClick={this.noChange} className="select-model-container">
         <h1>Load a Model</h1>
         <div className="model-container">
           <div className="model-new">
@@ -42,7 +49,7 @@ export class SelectModel extends React.Component {
             </div>
             
           </div>
-          <div className="model-blocker"></div>
+          <div id="model-blocker" className="model-blocker"></div>
           <div className="model-load">
             <h2>Load Model</h2>
             <label>Model link</label>
