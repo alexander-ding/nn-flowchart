@@ -6,7 +6,7 @@ import {ErrorBox} from "./ErrorBox.js";
 import {SelectModel} from "./SelectModel.js";
 import {LinkPage} from "./LinkPage.js";
 import {isCyclic, isLinear, isTrainable} from "./Utils.js";
-import {nodeTypes} from "./ModelInfo.js";
+import {nodeTypes, blankModel, denseModel, convModel} from "./ModelInfo.js";
 import {getModel, saveModel, startSession, updateTrain, deleteTrain, generateLink, getIDFromLink} from "./Server.js";
 import cloneDeep from 'lodash/cloneDeep';
 import './App.css';
@@ -335,9 +335,16 @@ export class App extends React.Component {
   }
 
   loadDefaultModel(name) {
+    this.setState({selectModelPage: false});
     switch (name) {
       case "blank":
-        this.setState({selectModelPage: false});
+        this.setState({models: blankModel});
+        return;
+      case "dense":
+        this.setState({models: denseModel});
+        return;
+      case "conv":
+        this.setState({models: convModel});
         return;
       default:
         return;
