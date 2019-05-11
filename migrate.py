@@ -5,11 +5,14 @@ from flask_migrate import Migrate, MigrateCommand
 print("Importing db")
 from server import db
 from run import create_app
+import os
 print("Creating app")
 app = create_app('config')
 print("App created")
 
-migrate = Migrate(app, db)
+MIGRATION_DIR = os.path.join('server', 'migrations')
+
+migrate = Migrate(app, db, directory=MIGRATION_DIR)
 manager = Manager(app)
 manager.add_command('db', MigrateCommand)
 

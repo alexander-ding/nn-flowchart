@@ -37,8 +37,10 @@ class Session:
         self.test_accuracy = 0.0 # 0.0 to 1.0
         self.loss = 0.0 # current loss
         self.killed = False # whether the training is killed
-        self.train()
     
+    def save_model(self):
+        return self.compiled_model.to_json()
+
     def compile_model(self):
         model = self.model
         latest_model = model['0']

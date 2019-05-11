@@ -20,6 +20,9 @@ class Trainer:
         self.sessions[key] = Session(key, data)
         return key
     
+    def train_session(self, key):
+        self.sessions[key].train()
+
     def kill_session(self, key):
         self.sessions[key].killed = True
         if (self.sessions[key] is not None):

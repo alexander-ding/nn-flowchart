@@ -117,7 +117,7 @@ export function isTrainable(models) {
   let currentNode = models[0]; // input node
   while (currentNode.ID !== 1) { // need to reach output node
     if (currentNode.connectedTo === null) {
-      return {ok: false, err: "Model does not cannot from input node to output node"};
+      return {ok: false, err: "Model does not connect from input node to output node"};
     }
     currentNode = models[currentNode.connectedTo];
   }

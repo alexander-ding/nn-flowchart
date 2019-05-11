@@ -23,6 +23,7 @@ class TrainResource(Resource):
         data = architecture_schema.dump(architecture).data
         try:
             session_id = trainer.new_session(loads(data["modelJSON"]))
+            trainer.train_session(session_id)
             train = Train(modelID=id, sessionID=session_id)
         except Exception as e:
             return {"message": str(e)}, 400

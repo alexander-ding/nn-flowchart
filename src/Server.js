@@ -91,3 +91,16 @@ export function getIDFromLink(link) {
     return json['id'];
   })
 }
+
+export function downloadModel(modelID) {
+  return fetch(BASE_URL+"Download?id="+modelID).then(response => {
+    if (response.status === 200 || response.status === 404 || response.status === 400)
+      return response.json();
+    throw new Error("Something went wrong with downloading the model");
+  }).then(json => {
+    if ('message' in json) {
+      throw new Error(json['message']);
+    }
+    return json['data'];
+  })
+}

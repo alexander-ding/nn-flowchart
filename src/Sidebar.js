@@ -129,7 +129,7 @@ function TrainElements(propOri) {
       
       <p>Model</p>
       {trainButton}
-      <Button>TODO-EXPORT</Button>
+      <Button onClick={props.downloadModel}>Download Architecture</Button>
 
       <p>Inputs</p>
       <Button>TODO</Button>

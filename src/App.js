@@ -7,7 +7,7 @@ import {SelectModel} from "./SelectModel.js";
 import {LinkPage} from "./LinkPage.js";
 import {isCyclic, isLinear, isTrainable} from "./Utils.js";
 import {nodeTypes, blankModel, denseModel, convModel} from "./ModelInfo.js";
-import {getModel, saveModel, startSession, updateTrain, deleteTrain, generateLink, getIDFromLink} from "./Server.js";
+import {getModel, saveModel, startSession, updateTrain, deleteTrain, generateLink, getIDFromLink, downloadModel} from "./Server.js";
 import cloneDeep from 'lodash/cloneDeep';
 import './App.css';
 
@@ -63,6 +63,7 @@ export class App extends React.Component {
 
     this.loadDefaultModel = this.loadDefaultModel.bind(this);
     this.loadModel = this.loadModel.bind(this);
+    this.downloadModel = this.downloadModel.bind(this);
 
     this.getLink = this.getLink.bind(this);
   }
@@ -376,6 +377,35 @@ export class App extends React.Component {
     
   }
 
+  downloadModel() {
+    const models = this.updateDependents(this.state.models);
+    this.setState({
+      models: models,
+    })
+    const resp = isTrainable(models);
+    if (!resp["ok"]) {
+      this.setError(resp["err"], true);
+      return;
+    }
+    const serializedModel = JSON.stringify({
+      modelJSON: JSON.stringify({model: models, batchSize: models[0].parameters.batchSize, epochs: this.state.modelInfo['epochs']}),
+    });
+    saveModel(serializedModel).then((responseJSON) => {
+      const modelID = responseJSON['data']["id"];
+      downloadModel(modelID).then(data => {
+        const element = document.createElement("a");
+        const file = new Blob([data], {type: 'text/json'});
+        element.href = URL.createObjectURL(file);
+        element.download = "model_architecture.json";
+        element.click();
+      }).catch(e => {
+        this.setError(e.message, true);
+      })
+    }).catch(e => {
+      this.setError(e.message, true);
+    });
+  }
+
   render() {
     return (
       <React.Fragment>
@@ -383,7 +413,7 @@ export class App extends React.Component {
         <SelectModel display={this.state.selectModelPage} loadModel={this.loadModel} loadDefaultModel={this.loadDefaultModel} toggle={()=>this.setState({selectModelPage: false})}></SelectModel>
         <ErrorBox errorMsg={this.state.errorMsg} dismissible={this.state.errorOnce} setError={this.setError}/>
         <div className="container-fluid d-flex h-100 flex-row no-margin">
-          <Sidebar models={this.state.models} selected={this.state.selected} trainingInfo={this.state.trainingInfo} newModel={this.newModel} setError={this.setError} update={this.updateModel} setSelectModelPage={() => this.setState({selectModelPage:true})} trainCloud={this.trainCloud} cancelTrain={this.cancelTrain} getLink={this.getLink}/>
+          <Sidebar models={this.state.models} selected={this.state.selected} trainingInfo={this.state.trainingInfo} newModel={this.newModel} setError={this.setError} update={this.updateModel} setSelectModelPage={() => this.setState({selectModelPage:true})} trainCloud={this.trainCloud} cancelTrain={this.cancelTrain} getLink={this.getLink} downloadModel={this.downloadModel}/>
           <div className="d-flex w-100 p-2 flex-column flex-grow-1 no-margin" ref="canvasContainer">
             <CanvasContainer models={this.state.models} selected={this.state.selected} select={this.selectModel} update={this.updateModel} remove={this.removeModel} editableSelected={this.state.editableSelected}/>
             <Toolbar modelInfo={this.state.modelInfo} trainingInfo={this.state.trainingInfo} updateModelInfo={this.updateModelInfo} selected={this.state.selected} models={this.state.models} update={(name, value, canTuple) => this.updateParameters(this.state.selected, name, value, canTuple)} setEditableSelected={this.setEditableSelected}/>
