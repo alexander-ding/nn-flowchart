@@ -55,8 +55,17 @@ class EditableLine extends React.Component {
         <input className="parameter-input" onFocus={this.onFocus} onBlur={() => this.onBlur(value)} onChange={this.onChange} value={value}></input>
       </div>
     )
-  }
-  
+  } 
+}
+
+function DataInput(props) {
+  return (
+    <div className="parameter-line">
+      <div className="parameter-name">Dataset</div>
+      <div className="parameter-input parameter-clickable" onClick={props.setInputDataset}>{props.value}</div>
+      
+    </div>
+  );
 }
 
 function Parameters(props) {
@@ -83,10 +92,10 @@ function Parameters(props) {
     case "input":
       return (
         <React.Fragment>
-          <EditableLine name="Batch Size" paraName="batchSize" setEditableSelected={props.setEditableSelected} parameters={model.parameters} callback={(n,v)=>props.callback(n,v,false)}/>
+          <DataInput value={model.parameters.data} setInputDataset={props.setInputDataset}></DataInput>
         </React.Fragment>
       )
-      case "maxpool":
+    case "maxpool":
       return (
         <React.Fragment>
           <EditableLine name="Pool Size" paraName="poolSize" setEditableSelected={props.setEditableSelected} parameters={model.parameters} callback={(n,v)=>props.callback(n,v,true)}/>
@@ -111,6 +120,7 @@ export function Toolbar(props) {
           <div className="left-line">
             <p>Model Information</p>
             <EditableLine name="Epochs" paraName="epochs" setEditableSelected={()=>null} parameters={modelInfo} callback={props.updateModelInfo}/>
+            <EditableLine name="Batch Size" paraName="batchSize" setEditableSelected={()=>null} parameters={modelInfo} callback={props.updateModelInfo}/>
           </div>
           <div className="blocker"></div>
           <div className="middle-line">
@@ -141,7 +151,7 @@ export function Toolbar(props) {
         
         <div className="left-line">
           <p>Parameters</p>
-          <Parameters model={model} callback={props.update} setEditableSelected={props.setEditableSelected}/>
+          <Parameters model={model} callback={props.update} setEditableSelected={props.setEditableSelected} setInputDataset = {props.setInputDataset}/>
         </div>
         <div className="blocker"></div>
         <div className="middle-line">

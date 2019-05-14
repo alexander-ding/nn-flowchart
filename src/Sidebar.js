@@ -25,7 +25,7 @@ function CTAList() {
   return (
     <ul className="list-unstyled CTAs">
       <li>
-        <a href="www.github.com/alexding123/NN-Flowchart" className="download">Download source</a>
+        <a href="https://www.github.com/alexding123/NN-Flowchart" className="download">Download source</a>
       </li>
     </ul>
   )
@@ -56,7 +56,7 @@ function Activation(props) {
     <Button onClick={() => props.newActivation(props.name)}>
       {nodeTypes[props.name].name}
     </Button>
-  )
+  );
 }
 
 class EditElements extends React.Component {
@@ -129,11 +129,10 @@ function TrainElements(propOri) {
       
       <p>Model</p>
       {trainButton}
-      <Button onClick={props.downloadModel}>Download Architecture</Button>
+      <Button onClick={props.downloadModel}>Download Model</Button>
 
-      <p>Inputs</p>
-      <Button>TODO</Button>
-      
+      <p>Input</p>
+      <Button onClick={props.setInput}>Set Input</Button>
       
     </React.Fragment>
   )

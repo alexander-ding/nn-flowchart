@@ -44,7 +44,6 @@ class Session:
     def compile_model(self):
         model = self.model
         latest_model = model['0']
-        batch_size = latest_model['parameters']['batchSize']
 
         # handle input layer
         input_layer = Input(latest_model['shapeOut'][1:])
@@ -80,7 +79,7 @@ class Session:
             elif (latest_model['type'] == "output"):
                 if layer.shape.ndims > 2:
                     layer = Flatten()(layer)
-                layer = Dense(latest_model['shapeOut'][-1], activation='softmax')(layer)
+                layer = Dense(latest_model['shapeOut'][-1], activation=latest_model['activation'])(layer)
             
         self.num_classes = latest_model['shapeOut'][-1]
         output_layer = layer
@@ -94,7 +93,6 @@ class Session:
         m._make_test_function()
         m._make_train_function()
         # handle output layer
-        self.batch_size = batch_size
         self.compiled_model = m
 
         self.dataset = model["0"]["parameters"]["data"]

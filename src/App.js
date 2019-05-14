@@ -5,6 +5,7 @@ import {Toolbar} from "./Toolbar.js";
 import {ErrorBox} from "./ErrorBox.js";
 import {SelectModel} from "./SelectModel.js";
 import {LinkPage} from "./LinkPage.js";
+import {SetInput} from "./SetInput.js";
 import {isCyclic, isLinear, isTrainable} from "./Utils.js";
 import {nodeTypes, blankModel, denseModel, convModel} from "./ModelInfo.js";
 import {getModel, saveModel, startSession, updateTrain, deleteTrain, generateLink, getIDFromLink, downloadModel} from "./Server.js";
@@ -22,6 +23,7 @@ export class App extends React.Component {
       },
       modelInfo: {
         epochs: "2",
+        batchSize: "25",
         // loss
         // optimizer
       },
@@ -43,6 +45,7 @@ export class App extends React.Component {
       selectModelPage: true, // is it in the page selecting model or main page
       linkPage: false, // is link page on display
       link: null, // the link for the current model
+      settingInput: false, // are we on a page to set input?
     };
 
     // function bindings
@@ -66,6 +69,7 @@ export class App extends React.Component {
     this.downloadModel = this.downloadModel.bind(this);
 
     this.getLink = this.getLink.bind(this);
+    this.setInput = this.setInput.bind(this);
   }
 
   _model(type, id, x, y) {
@@ -96,12 +100,17 @@ export class App extends React.Component {
      */
     // get the input model
     let inputNode = models[0];
-    inputNode.shapeOut = nodeTypes[inputNode.type].shapeOut(inputNode.parameters, null, this.setError);
+    inputNode.shapeOut = nodeTypes[inputNode.type].shapeOut(inputNode.parameters, this.state.modelInfo, this.setError);
     let currentNode = inputNode;
     let nextNode = models[inputNode.connectedTo];
     while (currentNode.connectedTo !== null) {
       nextNode.shapeIn = currentNode.shapeOut;
-      nextNode.shapeOut = nodeTypes[nextNode.type].shapeOut(nextNode.parameters, nextNode.shapeIn, this.setError);
+      if (nextNode.type === "input") {
+        nextNode.shapeOut = nodeTypes[nextNode.type].shapeOut(nextNode.parameters, this.state.modelInfo, this.setError);
+      } else {
+        nextNode.shapeOut = nodeTypes[nextNode.type].shapeOut(nextNode.parameters, nextNode.shapeIn, this.setError);
+      }
+      
       currentNode = nextNode;
       nextNode = models[nextNode.connectedTo];
     }
@@ -133,7 +142,8 @@ export class App extends React.Component {
       models[id][key] = dict[key];
     }
     if (isCyclic(models)) {
-      this.setError("Graph cannot have loops", false)
+      this.setError("Graph cannot have loops", false);
+      return;
     } else if (!isLinear(models)["ok"]) {
       this.setError(isLinear(models)["err"], false)
     } else {
@@ -260,8 +270,9 @@ export class App extends React.Component {
       return;
     }
     const serializedModel = JSON.stringify({
-      modelJSON: JSON.stringify({model: models, batchSize: models[0].parameters.batchSize, epochs: this.state.modelInfo['epochs']}),
+      modelJSON: JSON.stringify({model: models, batchSize: this.state.modelInfo["batchSize"], epochs: this.state.modelInfo['epochs']}),
     });
+    
     saveModel(serializedModel).then((responseJSON) => {
       let info = this.state.trainingInfo;
       info["training"] = true;
@@ -406,17 +417,24 @@ export class App extends React.Component {
     });
   }
 
+  setInput() {
+    this.setState({
+      settingInput: true,
+    });
+  }
+
   render() {
     return (
       <React.Fragment>
         <LinkPage display={this.state.linkPage} link={this.state.link} toggle={()=>this.setState({linkPage: false})}/>
         <SelectModel display={this.state.selectModelPage} loadModel={this.loadModel} loadDefaultModel={this.loadDefaultModel} toggle={()=>this.setState({selectModelPage: false})}></SelectModel>
+        <SetInput display={this.state.settingInput}></SetInput>
         <ErrorBox errorMsg={this.state.errorMsg} dismissible={this.state.errorOnce} setError={this.setError}/>
         <div className="container-fluid d-flex h-100 flex-row no-margin">
-          <Sidebar models={this.state.models} selected={this.state.selected} trainingInfo={this.state.trainingInfo} newModel={this.newModel} setError={this.setError} update={this.updateModel} setSelectModelPage={() => this.setState({selectModelPage:true})} trainCloud={this.trainCloud} cancelTrain={this.cancelTrain} getLink={this.getLink} downloadModel={this.downloadModel}/>
+          <Sidebar models={this.state.models} selected={this.state.selected} trainingInfo={this.state.trainingInfo} newModel={this.newModel} setError={this.setError} update={this.updateModel} setSelectModelPage={() => this.setState({selectModelPage:true})} trainCloud={this.trainCloud} cancelTrain={this.cancelTrain} getLink={this.getLink} downloadModel={this.downloadModel} setInput={this.setInput}/>
           <div className="d-flex w-100 p-2 flex-column flex-grow-1 no-margin" ref="canvasContainer">
             <CanvasContainer models={this.state.models} selected={this.state.selected} select={this.selectModel} update={this.updateModel} remove={this.removeModel} editableSelected={this.state.editableSelected}/>
-            <Toolbar modelInfo={this.state.modelInfo} trainingInfo={this.state.trainingInfo} updateModelInfo={this.updateModelInfo} selected={this.state.selected} models={this.state.models} update={(name, value, canTuple) => this.updateParameters(this.state.selected, name, value, canTuple)} setEditableSelected={this.setEditableSelected}/>
+            <Toolbar modelInfo={this.state.modelInfo} setInputDataset={this.setInput} trainingInfo={this.state.trainingInfo} updateModelInfo={this.updateModelInfo} selected={this.state.selected} models={this.state.models} update={(name, value, canTuple) => this.updateParameters(this.state.selected, name, value, canTuple)} setEditableSelected={this.setEditableSelected}/>
           </div>
           
         </div>

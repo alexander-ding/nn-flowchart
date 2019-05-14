@@ -61,3 +61,14 @@
     margin-top: 2px;
     margin-bottom: 2px;
 }
+
+.parameter-clickable {
+    background: #343a40;
+    cursor: pointer;
+    border-radius: 0.25rem;
+}
+
+.parameter-clickable:hover{
+    background: #202325;
+ 
+}
