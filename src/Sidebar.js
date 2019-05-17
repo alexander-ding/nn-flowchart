@@ -34,7 +34,7 @@ function CTAList() {
 function Button(props) {
   return (
     <div className="p-2 align-self-stretch button-container">
-      <button className="btn btn-dark btn-block" onClick={props.onClick} disabled={props.disabled}>
+      <button className="btn btn-sm btn-dark btn-block" onClick={props.onClick} disabled={props.disabled}>
         {props.children}
       </button>
     </div>

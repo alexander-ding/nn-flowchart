@@ -9,6 +9,7 @@ import {SetInput} from "./SetInput.js";
 import {isCyclic, isLinear, isTrainable} from "./Utils.js";
 import {nodeTypes, blankModel, denseModel, convModel} from "./ModelInfo.js";
 import {getModel, saveModel, startSession, updateTrain, deleteTrain, generateLink, getIDFromLink, downloadModel} from "./Server.js";
+import {DATASET_SHAPE} from "./Constants.js";
 import cloneDeep from 'lodash/cloneDeep';
 import './App.css';
 
@@ -24,6 +25,7 @@ export class App extends React.Component {
       modelInfo: {
         epochs: "2",
         batchSize: "25",
+        maxToken: null,
         // loss
         // optimizer
       },
@@ -70,6 +72,7 @@ export class App extends React.Component {
 
     this.getLink = this.getLink.bind(this);
     this.setInput = this.setInput.bind(this);
+    this.loadDefaultInput = this.loadDefaultInput.bind(this);
   }
 
   _model(type, id, x, y) {
@@ -101,6 +104,7 @@ export class App extends React.Component {
     // get the input model
     let inputNode = models[0];
     inputNode.shapeOut = nodeTypes[inputNode.type].shapeOut(inputNode.parameters, this.state.modelInfo, this.setError);
+    inputNode.shapeIn = inputNode.shapeOut;
     let currentNode = inputNode;
     let nextNode = models[inputNode.connectedTo];
     while (currentNode.connectedTo !== null) {
@@ -182,7 +186,7 @@ export class App extends React.Component {
     });
   }
 
-  updateParameters(id, name, value, canTuple) {
+  updateParameters(id, name, value, canTuple, floatOkay=false) {
     /* given a name and a value
      * updates the parameters of the model of the given id
      */
@@ -197,7 +201,7 @@ export class App extends React.Component {
       return;
     }
     for (var i = 0; i < components.length; i++) {
-      const num = parseInt(components[i]);
+      const num = floatOkay ? parseFloat(components[i]) : parseInt(components[i]);
       // do not update if any member of tuple is not a number
       if (isNaN(num)) {
         return;
@@ -270,7 +274,7 @@ export class App extends React.Component {
       return;
     }
     const serializedModel = JSON.stringify({
-      modelJSON: JSON.stringify({model: models, batchSize: this.state.modelInfo["batchSize"], epochs: this.state.modelInfo['epochs']}),
+      modelJSON: JSON.stringify({model: models, batchSize: this.state.modelInfo["batchSize"], epochs: this.state.modelInfo['epochs'], maxToken: this.state.modelInfo['maxToken']}),
     });
     
     saveModel(serializedModel).then((responseJSON) => {
@@ -335,6 +339,7 @@ export class App extends React.Component {
         this.setState({
           modelInfo: modelInfo,
           models: decoded['model'],
+          nextID: Math.max(...Object.keys(decoded['model']).map(key => Number(key)))+1,
           selectModelPage: false,
         });
         setError(null);
@@ -347,20 +352,26 @@ export class App extends React.Component {
   }
 
   loadDefaultModel(name) {
-    this.setState({selectModelPage: false});
+    let model = null;
     switch (name) {
       case "blank":
-        this.setState({models: blankModel});
-        return;
+        model = blankModel;
+        break;
       case "dense":
-        this.setState({models: denseModel});
-        return;
+        model = denseModel;
+        break;
       case "conv":
-        this.setState({models: convModel});
-        return;
+        model = convModel;
+        break;
       default:
         return;
     }
+    this.setState({
+      nextID: Math.max(...Object.keys(model).map(key => Number(key)))+1,
+      models: model,
+      selectModelPage: false,
+    });
+
   }
 
   getLink() {
@@ -369,7 +380,7 @@ export class App extends React.Component {
       models: models,
     })
     const serializedModel = JSON.stringify({
-      modelJSON: JSON.stringify({model: models, batchSize: models[0].parameters.batchSize, epochs: this.state.modelInfo['epochs']}),
+      modelJSON: JSON.stringify({model: models, batchSize: models[0].parameters.batchSize, epochs: this.state.modelInfo['epochs'], maxToken: this.state.modelInfo['maxToken']}),
     });
     
     saveModel(serializedModel).then(responseJSON => {
@@ -399,7 +410,7 @@ export class App extends React.Component {
       return;
     }
     const serializedModel = JSON.stringify({
-      modelJSON: JSON.stringify({model: models, batchSize: models[0].parameters.batchSize, epochs: this.state.modelInfo['epochs']}),
+      modelJSON: JSON.stringify({model: models, batchSize: models[0].parameters.batchSize, epochs: this.state.modelInfo['epochs'], maxToken: this.state.modelInfo['maxToken']}),
     });
     saveModel(serializedModel).then((responseJSON) => {
       const modelID = responseJSON['data']["id"];
@@ -417,6 +428,22 @@ export class App extends React.Component {
     });
   }
 
+  loadDefaultInput(name) {
+    let models = this.state.models;
+    models[0]['parameters']['data'] = name;
+    models[0]['parameters']['inputShape'] = DATASET_SHAPE[name].input;
+    models[1]['parameters']['outputShape'] = DATASET_SHAPE[name].output;
+
+    let modelInfo = this.state.modelInfo;
+    if (name === "IMDB")
+      modelInfo['maxToken'] = 1000;
+    this.setState({
+      models: this.updateDependents(models),
+      settingInput: false,
+      modelInfo: modelInfo,
+    });
+  }
+
   setInput() {
     this.setState({
       settingInput: true,
@@ -428,13 +455,13 @@ export class App extends React.Component {
       <React.Fragment>
         <LinkPage display={this.state.linkPage} link={this.state.link} toggle={()=>this.setState({linkPage: false})}/>
         <SelectModel display={this.state.selectModelPage} loadModel={this.loadModel} loadDefaultModel={this.loadDefaultModel} toggle={()=>this.setState({selectModelPage: false})}></SelectModel>
-        <SetInput display={this.state.settingInput}></SetInput>
+        <SetInput display={this.state.settingInput} loadDefaultInput={this.loadDefaultInput} toggle={()=>{this.setState({settingInput: false})}}></SetInput>
         <ErrorBox errorMsg={this.state.errorMsg} dismissible={this.state.errorOnce} setError={this.setError}/>
         <div className="container-fluid d-flex h-100 flex-row no-margin">
           <Sidebar models={this.state.models} selected={this.state.selected} trainingInfo={this.state.trainingInfo} newModel={this.newModel} setError={this.setError} update={this.updateModel} setSelectModelPage={() => this.setState({selectModelPage:true})} trainCloud={this.trainCloud} cancelTrain={this.cancelTrain} getLink={this.getLink} downloadModel={this.downloadModel} setInput={this.setInput}/>
           <div className="d-flex w-100 p-2 flex-column flex-grow-1 no-margin" ref="canvasContainer">
             <CanvasContainer models={this.state.models} selected={this.state.selected} select={this.selectModel} update={this.updateModel} remove={this.removeModel} editableSelected={this.state.editableSelected}/>
-            <Toolbar modelInfo={this.state.modelInfo} setInputDataset={this.setInput} trainingInfo={this.state.trainingInfo} updateModelInfo={this.updateModelInfo} selected={this.state.selected} models={this.state.models} update={(name, value, canTuple) => this.updateParameters(this.state.selected, name, value, canTuple)} setEditableSelected={this.setEditableSelected}/>
+            <Toolbar modelInfo={this.state.modelInfo} setInputDataset={this.setInput} trainingInfo={this.state.trainingInfo} updateModelInfo={this.updateModelInfo} selected={this.state.selected} models={this.state.models} update={(name, value, canTuple, floatOkay=false) => this.updateParameters(this.state.selected, name, value, canTuple, floatOkay)} setEditableSelected={this.setEditableSelected}/>
           </div>
           
         </div>

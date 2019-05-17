@@ -101,6 +101,18 @@ function Parameters(props) {
           <EditableLine name="Pool Size" paraName="poolSize" setEditableSelected={props.setEditableSelected} parameters={model.parameters} callback={(n,v)=>props.callback(n,v,true)}/>
         </React.Fragment>
       )
+    case "embedding":
+      return (
+        <React.Fragment>
+          <EditableLine name="Units" paraName="units" setEditableSelected={props.setEditableSelected} parameters={model.parameters} callback={(n,v)=>props.callback(n,v,false)}/>
+        </React.Fragment>
+      )
+    case "dropout":
+      return (
+        <React.Fragment>
+          <EditableLine name="Rate" paraName="rate" setEditableSelected={props.setEditableSelected} parameters={model.parameters} callback={(n,v)=>props.callback(n,v,false,true)}/>
+        </React.Fragment>
+      )
     default:
       return null;
   }

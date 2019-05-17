@@ -1,8 +1,9 @@
 import keras
-from keras.datasets import mnist
+from keras.datasets import mnist, imdb
 from keras.models import Model
-from keras.layers import Dense, Dropout, Flatten, Input
-from keras.layers import Conv2D, MaxPooling2D, MaxPooling1D, MaxPooling3D, ReLU
+from keras.preprocessing import sequence
+from keras.layers import Dense, Dropout, Flatten, Input, Embedding
+from keras.layers import Conv1D, Conv2D, Conv3D, MaxPooling2D, MaxPooling1D, MaxPooling3D, ReLU
 from keras.callbacks import LambdaCallback, Callback
 from keras import backend as K
 import tensorflow as tf
@@ -24,8 +25,9 @@ class Session:
         self.compiled_model = None
         self.batch_size = int(data['batchSize'])
         self.epochs = int(data['epochs'])
+        self.dataset = self.model['0']["parameters"]["data"]
+        self.max_token = data['maxToken']
         self.num_classes = None
-        self.dataset = None # name of dataset
         self.data_loaded = False # is training data loaded
         self.trained = False # is the session done training
         self.thread = None # the training thread
@@ -43,8 +45,9 @@ class Session:
 
     def compile_model(self):
         model = self.model
+        
         latest_model = model['0']
-
+    
         # handle input layer
         input_layer = Input(latest_model['shapeOut'][1:])
 
@@ -57,17 +60,23 @@ class Session:
             # add layer to Keras model
             para = latest_model['parameters']
             if (latest_model['type'] == 'dense'):
-                
-                if layer.shape.ndims > 2:
-                    layer = Flatten()(layer)
                 layer = Dense(para['units'], activation=latest_model['activation'])(layer)
+                
             elif (latest_model['type'] == 'conv'):
-                layer = Conv2D(filters=para['filters'], kernel_size=para['kernelSize'], strides=para['stride'], activation=latest_model['activation'])(layer)
+                if isinstance(para['kernelSize'], int):
+                    conv = Conv1D
+                elif len(para['kernelSize']) == 2:
+                    conv = Conv2D
+                elif len(para['kernelSize']) == 3:
+                    conv = Conv3D
+                
+                layer = conv(filters=para['filters'], kernel_size=para['kernelSize'], strides=para['stride'], activation=latest_model['activation'])(layer)
+
             elif (latest_model['type'] == "maxpool"):
                 # convert to list if number only
                 para['poolSize'] = para['poolSize'] if isinstance(para['poolSize'], (list, tuple)) else [para['poolSize']]
 
-                if isinstance(para['poolSize'], int):
+                if len(para['poolSize']) == 1:
                     maxpool = MaxPooling1D
                 elif len(para['poolSize']) == 2:
                     maxpool = MaxPooling2D
@@ -75,12 +84,19 @@ class Session:
                     maxpool = MaxPooling3D
                 
                 layer = maxpool(pool_size=para['poolSize'])(layer)
+
+            elif (latest_model['type'] == 'embedding'):
+                layer = Embedding(self.max_token, para["units"], input_length=latest_model["shapeIn"][1])(layer)
+            
+            elif (latest_model['type'] == "flatten"):
+                layer = Flatten()(layer)
+
+            elif (latest_model['type'] == "dropout"):
+                layer = Dropout(para['rate'])(layer)
                 
             elif (latest_model['type'] == "output"):
-                if layer.shape.ndims > 2:
-                    layer = Flatten()(layer)
                 layer = Dense(latest_model['shapeOut'][-1], activation=latest_model['activation'])(layer)
-            
+                
         self.num_classes = latest_model['shapeOut'][-1]
         output_layer = layer
 
@@ -94,9 +110,7 @@ class Session:
         m._make_train_function()
         # handle output layer
         self.compiled_model = m
-
-        self.dataset = model["0"]["parameters"]["data"]
-    
+        m.summary()
     def train(self):
         """ Adds a thread to train the model.
             The thread updates the class about the
@@ -116,17 +130,21 @@ class Session:
                     (x_train, y_train), (x_test, y_test) = mnist.load_data()
                     x_train = x_train.reshape(x_train.shape[0], x_train.shape[1], x_train.shape[2], 1)
                     x_test = x_test.reshape(x_test.shape[0], x_test.shape[1], x_test.shape[2], 1)
-                
-                # preprocess
-                
-                x_train = x_train.astype("float32") / 255
-                x_test = x_test.astype("float32") / 255
+
+                    # preprocess
+                    x_train = x_train.astype("float32") / 255
+                    x_test = x_test.astype("float32") / 255
+                elif self.dataset == "IMDB":
+                    (x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=1000)
+                    x_train = sequence.pad_sequences(x_train, 500)
+                    x_test = sequence.pad_sequences(x_test, 500)
 
                 epochs = self.epochs
                 batch_size = self.batch_size
                 num_classes = self.num_classes
                 y_train = keras.utils.to_categorical(y_train, num_classes)
                 y_test = keras.utils.to_categorical(y_test, num_classes)
+
                 # now data is ready
                 self.data_loaded = True
                 batches_per_epoch = x_train.shape[0]//batch_size
@@ -150,7 +168,6 @@ class Session:
                                         epochs=epochs,
                                         callbacks=[cb, EarlyStopper(self)],
                                         verbose=0)
-                
                 print("Session {}: evaluating".format(self.id))
                 _, acc = self.compiled_model.evaluate(x_test, y_test,
                                             batch_size=batch_size, 

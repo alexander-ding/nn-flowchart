@@ -10,6 +10,7 @@ class ArchitectureResource(Resource):
         
         if not json_data:
             return {'message': 'No input data provided'}, 400
+
         _, errors = architecture_schema.load(json_data)
         if errors:
             return errors, 402

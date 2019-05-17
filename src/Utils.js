@@ -110,7 +110,7 @@ export function isTrainable(models) {
 
   // output node must not be empty, 
   // have ndim = 2, and agree with batch size
-  if (models[1].shapeIn === null || models[1].shapeOut.length !== 2 || models[1].shapeOut[0] !== models[0].parameters["batchSize"]) {
+  if (models[1].shapeIn === null || models[1].shapeOut.length !== 2) {
     return {ok: false, err: "Output node must have shape (batchSize, categories)"};
   }
 

@@ -30,7 +30,6 @@ export class SelectModel extends React.Component {
     if (e.target.id === "background-model-select" || e.target.id === "model-blocker") {
       this.props.toggle();
     }
-    
   }
   render() {
     if (!this.props.display) {
