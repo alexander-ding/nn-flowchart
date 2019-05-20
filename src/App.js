@@ -9,6 +9,7 @@ import {SetInput} from "./SetInput.js";
 import {isCyclic, isLinear, isTrainable} from "./Utils.js";
 import {nodeTypes, blankModel, denseModel, convModel} from "./ModelInfo.js";
 import {getModel, saveModel, startSession, updateTrain, deleteTrain, generateLink, getIDFromLink, downloadModel} from "./Server.js";
+import {TrainSetup} from "./TrainSetup.js";
 import {DATASET_SHAPE} from "./Constants.js";
 import cloneDeep from 'lodash/cloneDeep';
 import './App.css';
@@ -26,8 +27,9 @@ export class App extends React.Component {
         epochs: "2",
         batchSize: "25",
         maxToken: null,
-        // loss
-        // optimizer
+        loss: "cce",
+        optimizer: "adam",
+        learningRate: "0.01",
       },
       selected: 0, // selected node;
       nextID: 2, // the ID for the next new layer; incremented as model grows
@@ -48,6 +50,7 @@ export class App extends React.Component {
       linkPage: false, // is link page on display
       link: null, // the link for the current model
       settingInput: false, // are we on a page to set input?
+      trainSetup: false, // are we customizing training information?
     };
 
     // function bindings
@@ -73,6 +76,8 @@ export class App extends React.Component {
     this.getLink = this.getLink.bind(this);
     this.setInput = this.setInput.bind(this);
     this.loadDefaultInput = this.loadDefaultInput.bind(this);
+
+    this.trainSetup = this.trainSetup.bind(this);
   }
 
   _model(type, id, x, y) {
@@ -274,7 +279,7 @@ export class App extends React.Component {
       return;
     }
     const serializedModel = JSON.stringify({
-      modelJSON: JSON.stringify({model: models, batchSize: this.state.modelInfo["batchSize"], epochs: this.state.modelInfo['epochs'], maxToken: this.state.modelInfo['maxToken']}),
+      modelJSON: JSON.stringify({model: models, modelInfo: this.state.modelInfo}),
     });
     
     saveModel(serializedModel).then((responseJSON) => {
@@ -380,7 +385,7 @@ export class App extends React.Component {
       models: models,
     })
     const serializedModel = JSON.stringify({
-      modelJSON: JSON.stringify({model: models, batchSize: models[0].parameters.batchSize, epochs: this.state.modelInfo['epochs'], maxToken: this.state.modelInfo['maxToken']}),
+      modelJSON: JSON.stringify({model: models, modelInfo: this.state.modelInfo}),
     });
     
     saveModel(serializedModel).then(responseJSON => {
@@ -410,7 +415,7 @@ export class App extends React.Component {
       return;
     }
     const serializedModel = JSON.stringify({
-      modelJSON: JSON.stringify({model: models, batchSize: models[0].parameters.batchSize, epochs: this.state.modelInfo['epochs'], maxToken: this.state.modelInfo['maxToken']}),
+      modelJSON: JSON.stringify({model: models, modelInfo: this.state.modelInfo}),
     });
     saveModel(serializedModel).then((responseJSON) => {
       const modelID = responseJSON['data']["id"];
@@ -450,18 +455,25 @@ export class App extends React.Component {
     });
   }
 
+  trainSetup() {
+    this.setState({
+      trainSetup: true,
+    })
+  }
+
   render() {
     return (
       <React.Fragment>
         <LinkPage display={this.state.linkPage} link={this.state.link} toggle={()=>this.setState({linkPage: false})}/>
         <SelectModel display={this.state.selectModelPage} loadModel={this.loadModel} loadDefaultModel={this.loadDefaultModel} toggle={()=>this.setState({selectModelPage: false})}></SelectModel>
         <SetInput display={this.state.settingInput} loadDefaultInput={this.loadDefaultInput} toggle={()=>{this.setState({settingInput: false})}}></SetInput>
+        <TrainSetup display={this.state.trainSetup} toggle={()=>this.setState({trainSetup: false})} modelInfo={this.state.modelInfo} update={this.updateModelInfo}></TrainSetup>
         <ErrorBox errorMsg={this.state.errorMsg} dismissible={this.state.errorOnce} setError={this.setError}/>
         <div className="container-fluid d-flex h-100 flex-row no-margin">
           <Sidebar models={this.state.models} selected={this.state.selected} trainingInfo={this.state.trainingInfo} newModel={this.newModel} setError={this.setError} update={this.updateModel} setSelectModelPage={() => this.setState({selectModelPage:true})} trainCloud={this.trainCloud} cancelTrain={this.cancelTrain} getLink={this.getLink} downloadModel={this.downloadModel} setInput={this.setInput}/>
           <div className="d-flex w-100 p-2 flex-column flex-grow-1 no-margin" ref="canvasContainer">
             <CanvasContainer models={this.state.models} selected={this.state.selected} select={this.selectModel} update={this.updateModel} remove={this.removeModel} editableSelected={this.state.editableSelected}/>
-            <Toolbar modelInfo={this.state.modelInfo} setInputDataset={this.setInput} trainingInfo={this.state.trainingInfo} updateModelInfo={this.updateModelInfo} selected={this.state.selected} models={this.state.models} update={(name, value, canTuple, floatOkay=false) => this.updateParameters(this.state.selected, name, value, canTuple, floatOkay)} setEditableSelected={this.setEditableSelected}/>
+            <Toolbar trainSetup={this.trainSetup} modelInfo={this.state.modelInfo} setInputDataset={this.setInput} trainingInfo={this.state.trainingInfo} updateModelInfo={this.updateModelInfo} selected={this.state.selected} models={this.state.models} update={(name, value, canTuple, floatOkay=false) => this.updateParameters(this.state.selected, name, value, canTuple, floatOkay)} setEditableSelected={this.setEditableSelected}/>
           </div>
           
         </div>

@@ -1,11 +1,10 @@
-import keras
-from keras.datasets import mnist, imdb
 from keras.models import Model
-from keras.preprocessing import sequence
-from keras.layers import Dense, Dropout, Flatten, Input, Embedding
-from keras.layers import Conv1D, Conv2D, Conv3D, MaxPooling2D, MaxPooling1D, MaxPooling3D, ReLU
 from keras.callbacks import LambdaCallback, Callback
 from keras import backend as K
+from .layers import *
+from .optimizers import *
+from .losses import *
+from .inputs import *
 import tensorflow as tf
 import threading
 
@@ -23,10 +22,13 @@ class Session:
         self.id = id
         self.model = data['model']
         self.compiled_model = None
-        self.batch_size = int(data['batchSize'])
-        self.epochs = int(data['epochs'])
+        self.batch_size = int(data['modelInfo']['batchSize'])
+        self.epochs = int(data['modelInfo']['epochs'])
         self.dataset = self.model['0']["parameters"]["data"]
-        self.max_token = data['maxToken']
+        self.max_token = data['modelInfo']['maxToken']
+        self.optimizer = data['modelInfo']['optimizer']
+        self.lr = float(data['modelInfo']['learningRate'])
+        self.loss_function = data['modelInfo']['loss']
         self.num_classes = None
         self.data_loaded = False # is training data loaded
         self.trained = False # is the session done training
@@ -49,10 +51,10 @@ class Session:
         latest_model = model['0']
     
         # handle input layer
-        input_layer = Input(latest_model['shapeOut'][1:])
+        input = input_layer(latest_model)
 
         # do middle layers
-        layer = input_layer
+        layer = input
         while (latest_model['type'] != 'output'):
             # get next layer in model
             latest_model = model[str(latest_model['connectedTo'])]
@@ -60,50 +62,33 @@ class Session:
             # add layer to Keras model
             para = latest_model['parameters']
             if (latest_model['type'] == 'dense'):
-                layer = Dense(para['units'], activation=latest_model['activation'])(layer)
-                
+                layer = dense_layer(latest_model, layer)
+
             elif (latest_model['type'] == 'conv'):
-                if isinstance(para['kernelSize'], int):
-                    conv = Conv1D
-                elif len(para['kernelSize']) == 2:
-                    conv = Conv2D
-                elif len(para['kernelSize']) == 3:
-                    conv = Conv3D
-                
-                layer = conv(filters=para['filters'], kernel_size=para['kernelSize'], strides=para['stride'], activation=latest_model['activation'])(layer)
+                layer = conv_layer(latest_model, layer)
 
             elif (latest_model['type'] == "maxpool"):
-                # convert to list if number only
-                para['poolSize'] = para['poolSize'] if isinstance(para['poolSize'], (list, tuple)) else [para['poolSize']]
-
-                if len(para['poolSize']) == 1:
-                    maxpool = MaxPooling1D
-                elif len(para['poolSize']) == 2:
-                    maxpool = MaxPooling2D
-                elif len(para['poolSize']) == 3:
-                    maxpool = MaxPooling3D
-                
-                layer = maxpool(pool_size=para['poolSize'])(layer)
+                layer = maxpool_layer(latest_model, layer)
 
             elif (latest_model['type'] == 'embedding'):
-                layer = Embedding(self.max_token, para["units"], input_length=latest_model["shapeIn"][1])(layer)
+                layer = embedding_layer(latest_model, layer, self.max_token)
             
             elif (latest_model['type'] == "flatten"):
-                layer = Flatten()(layer)
+                layer = flatten_layer(latest_model, layer)
 
             elif (latest_model['type'] == "dropout"):
-                layer = Dropout(para['rate'])(layer)
+                layer = dropout_layer(latest_model, layer)
                 
             elif (latest_model['type'] == "output"):
-                layer = Dense(latest_model['shapeOut'][-1], activation=latest_model['activation'])(layer)
+                layer = output_layer(latest_model, layer)
                 
         self.num_classes = latest_model['shapeOut'][-1]
-        output_layer = layer
+        output = layer
 
         # setup model
-        m = Model(inputs=input_layer, outputs=output_layer)
-        m.compile(loss=keras.losses.categorical_crossentropy,
-                  optimizer=keras.optimizers.Adam(lr=0.01),
+        m = Model(inputs=input, outputs=output)
+        m.compile(loss=get_loss(self.loss_function),
+                  optimizer=get_optimizer(self.optimizer, self.lr),
                   metrics=['accuracy'])
         m._make_predict_function()
         m._make_test_function()
@@ -126,24 +111,15 @@ class Session:
 
                 # loads data
                 print("Session {}: loading and preprocessing data".format(self.id))
-                if self.dataset == "MNIST":
-                    (x_train, y_train), (x_test, y_test) = mnist.load_data()
-                    x_train = x_train.reshape(x_train.shape[0], x_train.shape[1], x_train.shape[2], 1)
-                    x_test = x_test.reshape(x_test.shape[0], x_test.shape[1], x_test.shape[2], 1)
-
-                    # preprocess
-                    x_train = x_train.astype("float32") / 255
-                    x_test = x_test.astype("float32") / 255
-                elif self.dataset == "IMDB":
-                    (x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=1000)
-                    x_train = sequence.pad_sequences(x_train, 500)
-                    x_test = sequence.pad_sequences(x_test, 500)
 
                 epochs = self.epochs
                 batch_size = self.batch_size
                 num_classes = self.num_classes
-                y_train = keras.utils.to_categorical(y_train, num_classes)
-                y_test = keras.utils.to_categorical(y_test, num_classes)
+
+                (x_train, y_train), (x_test, y_test) = get_input(self.dataset, num_classes)
+
+                
+                
 
                 # now data is ready
                 self.data_loaded = True

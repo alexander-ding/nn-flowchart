@@ -1,4 +1,5 @@
 import React from 'react';
+import Collapsible from 'react-collapsible';
 import "./Sidebar.css";
 import {nodeTypes, layerNames, activationNames} from "./ModelInfo.js";
 
@@ -63,6 +64,7 @@ class EditElements extends React.Component {
   constructor(props) {
     super(props);
     this.props = props;
+    this.propsOri = props.propsOri;
     this.setActivation = this.setActivation.bind(this);
   }
 
@@ -91,17 +93,19 @@ class EditElements extends React.Component {
   }
   
   render() {
+    const triggerName = "btn btn-dark btn-block";
     return <React.Fragment>
-      <p>Layers</p>
-      <div className="d-flex flex-column">
-      { layerNames.map((name) => 
-        <Layer key={name}
-          name={name}
-          newModel={this.props.newModel}
-        />)
-      }
-      </div>
-      <p>Activations</p>
+      <Collapsible trigger="Layers" triggerTagName="button" triggerClassName={triggerName} triggerOpenedClassName={triggerName} onOpen={() => this.propsOri.update("layers", false)} onClose={() => this.propsOri.update("layers", true)} open={!this.propsOri.layersCollapsed}>
+        <div className="d-flex flex-column">
+        { layerNames.map((name) => 
+          <Layer key={name}
+            name={name}
+            newModel={this.props.newModel}
+          />)
+        }
+        </div>
+      </Collapsible>
+      <Collapsible trigger="Activations" triggerTagName="button" triggerClassName={triggerName} triggerOpenedClassName={triggerName} onOpen={() => this.propsOri.update("activations", false)} onClose={() => this.propsOri.update("activations", true)} open={!this.propsOri.activationsCollapsed}>
       <div className="d-flex flex-column">
       { activationNames.map((name) => 
         <Activation key={name} 
@@ -111,6 +115,7 @@ class EditElements extends React.Component {
         )
       }
       </div>
+      </Collapsible>
     </React.Fragment>
   }
 }
@@ -140,7 +145,7 @@ function TrainElements(propOri) {
 
 function ElementsContainer(props) {
   const propsExtracted = props.props;
-  const Elements = props.tabSelected === "edit" ? <EditElements models={propsExtracted.models} selected={propsExtracted.selected} setError={propsExtracted.setError} newModel={propsExtracted.newModel} update={propsExtracted.update}/>: <TrainElements props={propsExtracted}/>;
+  const Elements = props.tabSelected === "edit" ? <EditElements propsOri={props} models={propsExtracted.models} selected={propsExtracted.selected} setError={propsExtracted.setError} newModel={propsExtracted.newModel} update={propsExtracted.update}/>: <TrainElements props={propsExtracted}/>;
   return (
     <ul className="list-unstyled components">
       {Elements}
@@ -154,8 +159,19 @@ export class Sidebar extends React.Component {
     this.props = props
     this.state = {
       tabSelected: "edit", // which tab is selected
+      layersCollapsed: false,
+      activationsCollapsed: false,
     };
     this.changeTab = this.changeTab.bind(this);
+    this.set = this.set.bind(this);
+  }
+
+  set(name, v) {
+    if (name === "layers") {
+      this.setState({layersCollapsed: v});
+    } else if (name === "activations") {
+      this.setState({activationsCollapsed: v});
+    }
   }
 
   changeTab(tab) {
@@ -169,7 +185,7 @@ export class Sidebar extends React.Component {
     return (
       <nav className="p-2 h-100" id="sidebar">
         <SidebarHeader tabSelected={this.state.tabSelected} changeTab={this.changeTab} />
-        <ElementsContainer tabSelected={this.state.tabSelected} props={this.props}/>
+        <ElementsContainer tabSelected={this.state.tabSelected} layersCollapsed={this.state.layersCollapsed} activationsCollapsed={this.state.activationsCollapsed} update={this.set} props={this.props}/>
         <CTAList />
       
       </nav>

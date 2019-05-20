@@ -205,7 +205,7 @@ export const nodeTypes = {
             return null;
           }
           const mapped = dimensions.map((dimension, key) => {
-            return Math.floor((dimension - kernel[key])/stride[key]);
+            return Math.floor((dimension - kernel[key])/stride[key])+1;
           });
           return [batchSize, ...mapped, filters];
         },
@@ -336,9 +336,9 @@ export const nodeTypes = {
           setError("Output layer must have input layer of shape (batchSize, dim)", false);
         }
         if (isArray(parameters['outputShape'])) {
-          return [Number(shapeIn[0]), ...parameters['outputShape']];
+          return [shapeIn.slice(0,shapeIn.length-1), ...parameters['outputShape']];
         } else {
-          return [Number(shapeIn[0]), parameters['outputShape']];
+          return [shapeIn.slice(0,shapeIn.length-1), parameters['outputShape']];
         }
         
       },

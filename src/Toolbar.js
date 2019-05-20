@@ -133,6 +133,7 @@ export function Toolbar(props) {
             <p>Model Information</p>
             <EditableLine name="Epochs" paraName="epochs" setEditableSelected={()=>null} parameters={modelInfo} callback={props.updateModelInfo}/>
             <EditableLine name="Batch Size" paraName="batchSize" setEditableSelected={()=>null} parameters={modelInfo} callback={props.updateModelInfo}/>
+            <button onClick={props.trainSetup} className="btn btn-sm btn-light btn-block">More</button>
           </div>
           <div className="blocker"></div>
           <div className="middle-line">
