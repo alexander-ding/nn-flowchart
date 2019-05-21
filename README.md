@@ -65,6 +65,6 @@ Then go `serve -s build` to serve the frontend. Things should be working now.
 Every time the SQL database structure is updated in the Python code, run the following code in order to update the SQL server.
 
 ```Bash
-> python migrate.py db migrate
-> python migrate.py db upgrade
+python migrate.py db migrate
+python migrate.py db upgrade
 ```

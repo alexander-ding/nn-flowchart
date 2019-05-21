@@ -106,6 +106,29 @@ a.article:hover {
     }
 }
 
-.collapsible-header {
+.trigger {
     cursor: pointer;
+    background: #5b6cb6;
+    font-weight: bold;
+    color: #000 !important;
+    user-select: none;
+    transition: 0.3s;
+}
+
+
+.active, .trigger:hover {
+    background-color: #5664a3;
+}
+
+.trigger:after {
+    content: '\002B'; /* plus button to the right*/
+    color: #000;
+    font-weight: bold;
+    float: right;
+    margin-left: 5px;
+    
+}
+
+  .active:after {
+    content: "\2212";
 }

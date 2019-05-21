@@ -93,9 +93,10 @@ class EditElements extends React.Component {
   }
   
   render() {
-    const triggerName = "btn btn-dark btn-block";
+    const triggerName = "trigger";
+    const triggerOpenName = "trigger active";
     return <React.Fragment>
-      <Collapsible trigger="Layers" triggerTagName="button" triggerClassName={triggerName} triggerOpenedClassName={triggerName} onOpen={() => this.propsOri.update("layers", false)} onClose={() => this.propsOri.update("layers", true)} open={!this.propsOri.layersCollapsed}>
+      <Collapsible trigger="Layers" triggerTagName="p" id="layers-toggle" triggerClassName={triggerName} triggerOpenedClassName={triggerOpenName} onOpen={() => this.propsOri.update("layers", false)} onClose={() => this.propsOri.update("layers", true)} open={!this.propsOri.layersCollapsed}>
         <div className="d-flex flex-column">
         { layerNames.map((name) => 
           <Layer key={name}
@@ -105,7 +106,7 @@ class EditElements extends React.Component {
         }
         </div>
       </Collapsible>
-      <Collapsible trigger="Activations" triggerTagName="button" triggerClassName={triggerName} triggerOpenedClassName={triggerName} onOpen={() => this.propsOri.update("activations", false)} onClose={() => this.propsOri.update("activations", true)} open={!this.propsOri.activationsCollapsed}>
+      <Collapsible trigger="Activations" triggerTagName="p" triggerClassName={triggerName} triggerOpenedClassName={triggerOpenName} onOpen={() => this.propsOri.update("activations", false)} onClose={() => this.propsOri.update("activations", true)} open={!this.propsOri.activationsCollapsed}>
       <div className="d-flex flex-column">
       { activationNames.map((name) => 
         <Activation key={name} 
