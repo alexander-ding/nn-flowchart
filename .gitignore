@@ -27,3 +27,4 @@ chrome-user-data
 *.swo
 versions
 *.npy
+.ipynb_checkpoints
