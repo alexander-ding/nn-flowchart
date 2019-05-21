@@ -218,7 +218,8 @@ export const nodeTypes = {
       offsetY: 15,
       defaultParameters: {
         data: "MNIST",
-        inputShape: [28, 28, 1]
+        datasetID: "",
+        inputShape: [28, 28, 1],
       },
       canActivation: false,
       shapeOut: (parameters, modelInfo, setError) => {

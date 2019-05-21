@@ -13,7 +13,7 @@ class ArchitectureResource(Resource):
 
         _, errors = architecture_schema.load(json_data)
         if errors:
-            return errors, 402
+            return {'message': str(errors)}, 402
         architecture = Architecture(modelJSON=json_data["modelJSON"])
         db.session.add(architecture)
         db.session.commit()

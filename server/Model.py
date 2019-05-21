@@ -58,3 +58,36 @@ class LinkSchema(ma.Schema):
     id = fields.Integer()
     modelID = fields.Integer(required=True)
     link = fields.String()
+
+class Dataset(db.Model):
+    __tablename__ = "dataset"
+    id = db.Column(db.Integer, primary_key=True)
+    datasetID = db.Column(db.TEXT(), unique=True)
+    link = db.Column(db.TEXT())
+    datasetName = db.Column(db.TEXT())
+    inputShape = db.Column(db.TEXT())
+    outputShape = db.Column(db.TEXT())
+
+    def new_key(self, N=10):
+        import random
+        import string
+        return ''.join(random.choices(string.ascii_uppercase + string.digits, k=N))
+
+    def __init__(self, link, datasetName, inputShape, outputShape):
+        self.datasetName = datasetName
+        self.link = link
+        ids = [l[0] for l in Dataset.query.with_entities(Dataset.datasetID).all()]
+        id = self.new_key()
+        while id in ids:
+            id = self.new_key()
+        self.inputShape = str(inputShape)
+        self.outputShape = str(outputShape)
+        self.datasetID = id
+
+class DatasetSchema(ma.Schema):
+    id = fields.Integer()
+    link = fields.String(required=True)
+    datasetID = fields.String()
+    datasetName = fields.String(required=True)
+    inputShape = fields.String(required=True)
+    outputShape = fields.String(required=True)

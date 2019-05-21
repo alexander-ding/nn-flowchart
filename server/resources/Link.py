@@ -11,7 +11,7 @@ class LinkResource(Resource):
             return {'message', 'No modelID provided'}, 400
         _, errs = link_schema.load(json_data)
         if errs:
-            return errs, 402
+            return {'message': str(errs)}, 402
         link = Link(modelID=json_data['modelID'])
         db.session.add(link)
         db.session.commit()

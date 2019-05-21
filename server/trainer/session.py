@@ -19,18 +19,21 @@ class EarlyStopper(Callback):
 
 class Session:
     def __init__(self, id, data):
+        
         self.id = id
         self.model = data['model']
         self.compiled_model = None
         self.batch_size = int(data['modelInfo']['batchSize'])
         self.epochs = int(data['modelInfo']['epochs'])
         self.dataset = self.model['0']["parameters"]["data"]
+        self.datasetID = self.model['0']["parameters"]["datasetID"]
         self.max_token = data['modelInfo']['maxToken']
         self.optimizer = data['modelInfo']['optimizer']
         self.lr = float(data['modelInfo']['learningRate'])
         self.loss_function = data['modelInfo']['loss']
         self.num_classes = None
         self.data_loaded = False # is training data loaded
+        self.data_err = None # any error in loading data
         self.trained = False # is the session done training
         self.thread = None # the training thread
         self.current_epoch = 0
@@ -96,6 +99,11 @@ class Session:
         # handle output layer
         self.compiled_model = m
         m.summary()
+
+    def update(self, t, err):
+        self.data_loaded = t
+        self.data_err = err
+
     def train(self):
         """ Adds a thread to train the model.
             The thread updates the class about the
@@ -116,11 +124,11 @@ class Session:
                 batch_size = self.batch_size
                 num_classes = self.num_classes
 
-                (x_train, y_train), (x_test, y_test) = get_input(self.dataset, num_classes)
-
+                (x_train, y_train), (x_test, y_test) = get_input(self.dataset, self.datasetID, num_classes, self.update)
                 
-                
-
+                print("Data shapes")
+                print("x_train: {}; y_train: {}".format(x_train.shape, y_train.shape))
+                print("x_test: {}; y_test: {}".format(x_test.shape, y_test.shape))
                 # now data is ready
                 self.data_loaded = True
                 batches_per_epoch = x_train.shape[0]//batch_size
@@ -133,6 +141,10 @@ class Session:
                     self.loss = logs.get('loss')
 
                 def epoch_end(epoch, logs={}):
+                    _, acc = self.compiled_model.evaluate(x_test, y_test,
+                                            batch_size=batch_size, 
+                                            verbose=0)
+                    self.test_accuracy = acc
                     self.current_epoch += 1
                     self.corrects = 0
                     self.all = 0
@@ -145,10 +157,6 @@ class Session:
                                         callbacks=[cb, EarlyStopper(self)],
                                         verbose=0)
                 print("Session {}: evaluating".format(self.id))
-                _, acc = self.compiled_model.evaluate(x_test, y_test,
-                                            batch_size=batch_size, 
-                                            verbose=0)
-                self.test_accuracy = acc
                 self.trained = True
         t = threading.Thread(target=thread_function)
         t.start()

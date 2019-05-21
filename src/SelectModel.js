@@ -42,9 +42,9 @@ export class SelectModel extends React.Component {
           <div className="model-new">
             <h2>New Model</h2>
             <div className="d-flex flex-wrap p-2">
-              <div className="p-2"><button type="button" onClick={() => this.props.loadDefaultModel("blank")}className="btn btn-secondary">Blank</button></div>
-              <div className="p-2"><button type="button" onClick={() => this.props.loadDefaultModel("dense")}className="btn btn-secondary">Dense</button></div>
-              <div className="p-2"><button type="button" onClick={() => this.props.loadDefaultModel("conv")}className="btn btn-secondary">Conv</button></div>
+              <div className="p-2"><button type="button" onClick={() => this.props.loadDefaultModel("blank")} className="btn btn-secondary">Blank</button></div>
+              <div className="p-2"><button type="button" onClick={() => this.props.loadDefaultModel("dense")} className="btn btn-secondary">Dense</button></div>
+              <div className="p-2"><button type="button" onClick={() => this.props.loadDefaultModel("conv")} className="btn btn-secondary">Conv</button></div>
             </div>
             
           </div>

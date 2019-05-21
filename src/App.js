@@ -8,7 +8,7 @@ import {LinkPage} from "./LinkPage.js";
 import {SetInput} from "./SetInput.js";
 import {isCyclic, isLinear, isTrainable} from "./Utils.js";
 import {nodeTypes, blankModel, denseModel, convModel} from "./ModelInfo.js";
-import {getModel, saveModel, startSession, updateTrain, deleteTrain, generateLink, getIDFromLink, downloadModel} from "./Server.js";
+import {getModel, saveModel, startSession, updateTrain, deleteTrain, generateLink, getIDFromLink, downloadModel, loadInput} from "./Server.js";
 import {TrainSetup} from "./TrainSetup.js";
 import {DATASET_SHAPE} from "./Constants.js";
 import cloneDeep from 'lodash/cloneDeep';
@@ -76,6 +76,7 @@ export class App extends React.Component {
     this.getLink = this.getLink.bind(this);
     this.setInput = this.setInput.bind(this);
     this.loadDefaultInput = this.loadDefaultInput.bind(this);
+    this.loadCustomInput = this.loadCustomInput.bind(this);
 
     this.trainSetup = this.trainSetup.bind(this);
   }
@@ -232,7 +233,12 @@ export class App extends React.Component {
     });
   }
 
-  updateModelInfo(name, value) {
+  updateModelInfo(name, value, intOnly=false) {
+    if (intOnly) {
+      if (isNaN(value) || value === "") {
+        return;
+      }
+    }
     let modelInfo = this.state.modelInfo
     modelInfo[name] = value;
     this.setState({
@@ -449,6 +455,36 @@ export class App extends React.Component {
     });
   }
 
+  loadCustomInput(url, name, inputShape, outputShape, setError) {
+    if (inputShape.length === 0 || outputShape.length === 0) {
+      setError("Input and output shapes must be set");
+      return;
+    }
+    if (name === null) {
+      setError("Name your dataset!");
+      return;
+    }
+    loadInput(url, name, inputShape, outputShape).catch(e => {
+      setError(e.message);
+      return;
+    }).then(data => {
+      let models = this.state.models;
+      models[0].parameters['data'] = data.datasetName;
+      models[0].parameters['inputShape'] = JSON.parse(data.inputShape);
+      models[0].parameters['datasetID'] = data.datasetID;
+      models[1].parameters['data'] = data.datasetName;
+      models[1].parameters['outputShape'] = JSON.parse(data.outputShape);
+
+      models = this.updateDependents(models);
+
+      this.setState({
+        models: models,
+        settingInput: false,
+      });
+      console.log(models);
+    });
+  }
+
   setInput() {
     this.setState({
       settingInput: true,
@@ -466,7 +502,7 @@ export class App extends React.Component {
       <React.Fragment>
         <LinkPage display={this.state.linkPage} link={this.state.link} toggle={()=>this.setState({linkPage: false})}/>
         <SelectModel display={this.state.selectModelPage} loadModel={this.loadModel} loadDefaultModel={this.loadDefaultModel} toggle={()=>this.setState({selectModelPage: false})}></SelectModel>
-        <SetInput display={this.state.settingInput} loadDefaultInput={this.loadDefaultInput} toggle={()=>{this.setState({settingInput: false})}}></SetInput>
+        <SetInput display={this.state.settingInput} loadDefaultInput={this.loadDefaultInput} loadInput={this.loadCustomInput} toggle={()=>{this.setState({settingInput: false})}}></SetInput>
         <TrainSetup display={this.state.trainSetup} toggle={()=>this.setState({trainSetup: false})} modelInfo={this.state.modelInfo} update={this.updateModelInfo}></TrainSetup>
         <ErrorBox errorMsg={this.state.errorMsg} dismissible={this.state.errorOnce} setError={this.setError}/>
         <div className="container-fluid d-flex h-100 flex-row no-margin">

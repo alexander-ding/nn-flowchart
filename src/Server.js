@@ -104,3 +104,29 @@ export function downloadModel(modelID) {
     return json['data'];
   })
 }
+
+export function loadInput(url, name, inputShape, outputShape) {
+  return fetch(BASE_URL+"Dataset", {
+    method: "POST",
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      link: url,
+      datasetName: name,
+      inputShape: String(inputShape),
+      outputShape: String(outputShape),
+    })
+  }).then(response => {
+    if (response.status === 201 || response.status === 404 || response.status === 400) 
+      return response.json();
+    throw new Error("Something went wrong when loading the input");
+  }).then(json => {
+    console.log(json);
+    if ('message' in json) {
+      throw new Error(json['message']);
+    }
+    return json['data'];
+  });
+}
