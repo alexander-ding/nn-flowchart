@@ -1,4 +1,5 @@
-# Migration script
+# The script to migrate the python representation of database into
+# the actual sql server
 
 from flask_script import Manager
 from flask_migrate import Migrate, MigrateCommand

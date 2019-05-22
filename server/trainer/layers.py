@@ -1,15 +1,37 @@
+""" Handling the details of getting different kinds of Keras layers from the server's model's layer
+"""
+
 from keras.layers import Dense, Dropout, Flatten, Input, Embedding
 from keras.layers import Conv1D, Conv2D, Conv3D, MaxPooling2D, MaxPooling1D, MaxPooling3D, ReLU
 
-def input_layer(latest_model):
-    return Input(latest_model['shapeOut'][1:])
+def input_layer(layer):
+    """ Gets an Input layer
 
-def dense_layer(latest_model, layer):
-    para = latest_model['parameters']
-    return Dense(para['units'], activation=latest_model['activation'])(layer)
+        Returns
+        -------
+        keras.layer
+    """
+    return Input(['shapeOut'][1:])
 
-def conv_layer(latest_model, layer):
-    para = latest_model['parameters']
+def dense_layer(layer, model):
+    """ Gets a Dense layer and applies it to the current model
+
+        Returns
+        -------
+        keras.layer
+    """
+    para = layer['parameters']
+    return Dense(para['units'], activation=layer['activation'])(model)
+
+def conv_layer(layer, model):
+    """ Gets a Convolutional layer (ndim to-be-determined) and applies it 
+        to the current model
+
+        Returns
+        -------
+        keras.layer
+    """
+    para = layer['parameters']
     if isinstance(para['kernelSize'], int):
         conv = Conv1D
     elif len(para['kernelSize']) == 2:
@@ -17,10 +39,17 @@ def conv_layer(latest_model, layer):
     elif len(para['kernelSize']) == 3:
         conv = Conv3D
     
-    return conv(filters=para['filters'], kernel_size=para['kernelSize'], strides=para['stride'], activation=latest_model['activation'])(layer)
+    return conv(filters=para['filters'], kernel_size=para['kernelSize'], strides=para['stride'], activation=layer['activation'])(model)
 
-def maxpool_layer(latest_model, layer):
-    para = latest_model['parameters']
+def maxpool_layer(layer, model):
+    """ Gets a MaxPool layer (ndim to-be-determined) and applies it
+        to the current model
+
+        Returns
+        -------
+        keras.layer
+    """
+    para = layer['parameters']
     # convert to list if number only
     para['poolSize'] = para['poolSize'] if isinstance(para['poolSize'], (list, tuple)) else [para['poolSize']]
 
@@ -31,18 +60,43 @@ def maxpool_layer(latest_model, layer):
     elif len(para['poolSize']) == 3:
         maxpool = MaxPooling3D
     
-    return maxpool(pool_size=para['poolSize'])(layer)
+    return maxpool(pool_size=para['poolSize'])(model)
 
-def embedding_layer(latest_model, layer, max_token):
-    para = latest_model['parameters']
-    return Embedding(max_token, para["units"], input_length=latest_model["shapeIn"][1])(layer)
+def embedding_layer(layer, model, max_token):
+    """ Gets an Embedding layer given the biggest possible token index
+        and applies it to the current model
 
-def flatten_layer(latest_model, layer):
-    return Flatten()(layer)
+        Returns
+        -------
+        keras.layer
+    """
+    para = layer['parameters']
+    return Embedding(max_token, para["units"], input_length=layer["shapeIn"][1])(model)
 
-def dropout_layer(latest_model, layer):
-    para = latest_model['parameters']
-    return Dropout(para['rate'])(layer)
+def flatten_layer(layer, model):
+    """ Gets a Flatten layer and applies it to the current model
 
-def output_layer(latest_model, layer):
-    return Dense(latest_model['shapeOut'][-1], activation=latest_model['activation'])(layer)
+        Returns
+        -------
+        keras.layer
+    """
+    return Flatten()(model)
+
+def dropout_layer(layer, model):
+    """ Gets a Dropout layer and applies it to the current model
+
+        Returns
+        -------
+        keras.layer
+    """
+    para = layer['parameters']
+    return Dropout(para['rate'])(model)
+
+def output_layer(layer, model):
+    """ Gets an Output layer and applies it to the current model
+
+        Returns
+        -------
+        keras.layer
+    """
+    return Dense(layer['shapeOut'][-1], activation=layer['activation'])(model)

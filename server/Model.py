@@ -1,7 +1,19 @@
+""" Describes the relational data structure that corresponds
+    to the generated sql database
+
+    Each db.Model class is a table of its own, and each corresponding
+    ma.Schema is for verifying whether a json input can be used to
+    create a new row in the table
+
+    The changes here are reflected by running the migration script
+    that updates the sql server
+"""
+
 from flask import Flask
 from marshmallow import Schema, fields, pre_load, validate
 from flask_marshmallow import Marshmallow
 from flask_sqlalchemy import SQLAlchemy
+from .utils import new_key
 
 ma = Marshmallow()
 db = SQLAlchemy()
@@ -41,17 +53,12 @@ class Link(db.Model):
     modelID = db.Column(db.Integer)
     link = db.Column(db.TEXT(), unique=True)
 
-    def new_key(self, N=10):
-        import random
-        import string
-        return ''.join(random.choices(string.ascii_uppercase + string.digits, k=N))
-
     def __init__(self, modelID):
         self.modelID = modelID
         links = [l[0] for l in Link.query.with_entities(Link.link).all()]
-        link = self.new_key()
+        link = new_key() # generates a random key for the new row
         while link in links:
-            link = self.new_key()
+            link = new_key()
         self.link = link
 
 class LinkSchema(ma.Schema):
@@ -68,18 +75,13 @@ class Dataset(db.Model):
     inputShape = db.Column(db.TEXT())
     outputShape = db.Column(db.TEXT())
 
-    def new_key(self, N=10):
-        import random
-        import string
-        return ''.join(random.choices(string.ascii_uppercase + string.digits, k=N))
-
     def __init__(self, link, datasetName, inputShape, outputShape):
         self.datasetName = datasetName
         self.link = link
         ids = [l[0] for l in Dataset.query.with_entities(Dataset.datasetID).all()]
-        id = self.new_key()
+        id = new_key() # generate a new key for the dataset
         while id in ids:
-            id = self.new_key()
+            id = new_key()
         self.inputShape = str(inputShape)
         self.outputShape = str(outputShape)
         self.datasetID = id
