@@ -1,6 +1,9 @@
 import React from 'react';
 import { isArray, isNumber } from 'util';
 
+const activationBoxHeight = 20;
+const activationBoxColor = "#cccccc";
+
 function conv(props) {
   const squareSize = 40;
   const xInterval = squareSize / 4;
@@ -11,7 +14,7 @@ function conv(props) {
   const thirdColor = "#5c98f9";
   let activationSVG;
   if (props.activation != null) {
-    activationSVG = nodeTypes[props.activation].svg(xInterval*2+5, yInterval*2+squareSize-2, squareSize-10,squareSize/2 - 4);
+    activationSVG = nodeTypes[props.activation].svg(xInterval*2+squareSize/2, yInterval*2+squareSize+activationBoxHeight/2+3);
   } else {
     activationSVG = null
   }
@@ -19,34 +22,37 @@ function conv(props) {
     <rect width={squareSize} height={squareSize} fill={firstColor}/>
     <rect x={xInterval} y={yInterval} width={squareSize} height={squareSize} fill={secondColor}/>
     <rect x={xInterval*2} y={yInterval*2} width={squareSize} height={squareSize} fill={thirdColor}/>
+    <rect x={xInterval*2} y={yInterval*2+squareSize} width={squareSize} height={activationBoxHeight} fill={activationBoxColor}/>
     {activationSVG}
   </React.Fragment>
 }
 
 function dense(props) {
   const xSize = 40;
-  const ySize = 100;
+  const ySize = 80;
   const numCircles = 3;
   const squareColor = "#665cf9";
+  
   const circleColor = "#83a5f7";
 
   const circles = [...Array(numCircles)].map((_, i) =>
     <circle cx={xSize / 2} 
-            cy={ySize / (numCircles+1) * (i+1)} 
+            cy={(ySize-8) / numCircles * (i+0.5)+4} 
             key={i}
-            r={ySize / (numCircles+1) /2 - 2}
+            r={ySize / numCircles / 2 - 4}
             fill={circleColor}>
             
             </circle>
   );
   let activationSVG;
   if (props.activation != null) {
-    activationSVG = nodeTypes[props.activation].svg(4, ySize-2);
+    activationSVG = nodeTypes[props.activation].svg(xSize/2, ySize+activationBoxHeight/2+3);
   } else {
     activationSVG = null
   }
   return <React.Fragment>
-    <rect width={xSize} height={ySize} fill={squareColor}/>,
+    <rect width={xSize} height={ySize} fill={squareColor}/>
+    <rect width={xSize} y={ySize} height={activationBoxHeight} fill={activationBoxColor}/>
     {circles}
     {activationSVG}
   </React.Fragment>
@@ -62,18 +68,19 @@ function input(props) {
 
 function output(props) {
   const color = "#008066";
-  const width = 20;
-  const height = 80;
+  const width = 30;
+  const height = 60;
 
   let activationSVG;
   if (props.activation != null) {
-    activationSVG = nodeTypes[props.activation].svg(4, height-2);
+    activationSVG = nodeTypes[props.activation].svg(width/2, height+activationBoxHeight/2+3);
   } else {
     activationSVG = null
   }
 
   return <React.Fragment>
     <rect width={width} height={height} fill={color}></rect>
+    <rect width={width} y={height} height={activationBoxHeight} fill={activationBoxColor}></rect>
     {activationSVG}
   </React.Fragment>
 }
@@ -136,26 +143,35 @@ function flatten(props) {
 
 // redo visual another day yeah? TODO
 function relu(x, y) {
-  return (
-    <text x={x} y={y} fontSize="14">ReLU</text>
-  )
+  const width = 12;
+  const height = 8;
+  return <React.Fragment>
+    <path d={"M"+(x-width)+" "+y+"l"+width+ " 0 l" + width + " -" + height} stroke="black" strokeWidth="2" fill="none"/>
+  </React.Fragment>
 }
 
 function sigmoid(x, y) {
+  const width = 12;
+  const height = 4;
   return (
-    <text x={x} y={y} fontSize="10">Sigmoid</text>
+    <path d={"M "+(x-width)+" "+y+" q "+(width-1)+ " 0 " + width + " " + (-height) + " q 1 " + (-height) + " " + width + " " + (-height)} stroke="black" strokeWidth="2" fill="none"/>
   )
 }
 
 function softmax(x, y) {
+  const width = 24;
+  const height = 8;
   return (
-    <text x={x} y={y} fontSize="8">SoftMax</text>
+    <path d={"M "+(x-width/2)+" "+y+" q "+(width-1)+ " 0 " + width + " " + (-height)} stroke="black" strokeWidth="2" fill="none"/>
   )
 }
 
 function tanh(x, y) {
+  // M 0 160 Q 140 160 240 80 Q 340 0 480 0 
+  const width = 12;
+  const height = 4;
   return (
-    <text x={x} y={y} fontSize="14">Tanh</text>
+    <path d={"M "+(x-width)+" "+y+" q "+(width-5)+ " 0 " + width + " " + (-height) + " q 5 " + (-height) + " " + width + " " + (-height)} stroke="black" strokeWidth="2" fill="none"/>
   )
 }
 
