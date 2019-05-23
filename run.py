@@ -22,9 +22,9 @@ def create_app(config_filename):
     CORS(app, resources={r"/api/*": {"origins": "*"}}) # this allows the api to be accessed by other users!
     return app
 
+app = create_app("config")
+app.debug = True
 if __name__ == "__main__":
-    app = create_app("config")
-    app.debug = True
     @app.route("/")
     def index():  
         return send_file('build/index.html')
