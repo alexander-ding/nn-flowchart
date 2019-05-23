@@ -2,16 +2,17 @@ import React from 'react';
 import "./SetInput.css";
 
 export class SetInput extends React.Component {
+  /* the page to select an input dataset */
   constructor(props) {
     super(props);
     this.props = props;
     this.state = {
-      err: null,
-      name: "",
-      link: "",
-      inputShape: [],
+      err: null, // internal error
+      name: "", // name of dataset
+      link: "", // link to dataset
+      inputShape: [], // user-specified shape
       outputShape: [],
-      inputShapeDisplay: "",
+      inputShapeDisplay: "", // texts to display the corresponding shapes
       outputShapeDisplay: "",
     }
 
@@ -26,14 +27,19 @@ export class SetInput extends React.Component {
   }
 
   setError(err) {
+    /* set internal error */
     this.setState({err:err})
   }
 
   onChange(e) {
+    /* update the link's text */
     this.setState({link:e.target.value});
   }
 
   breakShape(value) {
+    /* helper function to break down a string describing an array
+     * into an actual array
+     */
     let components = String(value).split(",");
 
     // do not accept empty inputs
@@ -50,20 +56,30 @@ export class SetInput extends React.Component {
     }
     return components;
   }
+
   toString(shape) {
+    /* convert an array into its string representation */
     if (shape.length === 0) {
       return "";
     }
     return shape.join(",");
   }
+
   onChangeShapeInput(e) {
+    /* change the input shape's display (its string) */
     this.setState({
       inputShapeDisplay: e.target.value,
     })
   }
 
   onBlurInput(e) {
+    /* update the input shape to reflect the user input 
+     * (stored in inputShapeDisplay), rejecting it if
+     * malformed
+     */
+
     const components = this.breakShape(e.target.value);
+    // reject the shape if malformed
     if (components === null) {
       this.setState({
         inputShapeDisplay: this.toString(this.state.inputShape),
@@ -77,13 +93,19 @@ export class SetInput extends React.Component {
   }
 
   onChangeShapeOutput(e) {
+    /* change the output shape's display (its string) */
     this.setState({
       outputShapeDisplay: e.target.value,
     });
   }
 
   onBlurOutput(e) {
+    /* update the output shape to reflect the user output 
+     * (stored in outputShapeDisplay), rejecting it if
+     * malformed
+     */
     const components = this.breakShape(e.target.value);
+    // reject the shape if malformed
     if (components === null) {
       this.setState({
         outputShapeDisplay: this.toString(this.state.outputShape),
@@ -97,12 +119,14 @@ export class SetInput extends React.Component {
   }
   
   onChangeName(e) {
+    /* update the name of the dataset */
     this.setState({
       name: e.target.value,
     })
   }
 
   noChange(e) {
+    /* cancel this page without any changes if background is clicked */
     if (e.target.id === "background-input-set" || e.target.id === "input-blocker") {
       this.props.toggle();
     }

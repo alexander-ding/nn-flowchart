@@ -2,6 +2,7 @@ import React from "react";
 import "./TrainSetup.css";
 
 function Option(props) {
+  /* one option on the list, specially shown if selected */
   const className = (props.selected === props.name) ? "btn btn-info" : "btn btn-secondary"
   return (
     <div className="p-2">
@@ -11,6 +12,7 @@ function Option(props) {
 }
 
 export class TrainSetup extends React.Component {
+  /* the page setting details of training configuration */
   constructor(props) {
     super(props);
     this.props = props;
@@ -19,6 +21,7 @@ export class TrainSetup extends React.Component {
   }
 
   onClick(e) {
+    /* cancel this page if background is clicked */
     if (e.target.id === "background-input-set") {
       this.props.toggle();
     }

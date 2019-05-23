@@ -107,7 +107,7 @@ export function isTrainable(models) {
   if (isCyclic(models)) {
     return {ok: false, err: "Model cannot be cyclic"};
   }
-
+  
   // output node must not be empty, 
   // have ndim = 2, and agree with batch size
   if (models[1].shapeIn === null || models[1].shapeOut.length !== 2) {

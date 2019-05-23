@@ -1,10 +1,16 @@
 import React from 'react';
 import { isArray, isNumber } from 'util';
 
+// mega fuckton of constants to describe the svg
+// shapes of things
+
+
+// describe layers' and activation function's svg representation
 const activationBoxHeight = 20;
 const activationBoxColor = "#cccccc";
 
 function conv(props) {
+  // svg for a conv layer
   const squareSize = 40;
   const xInterval = squareSize / 4;
   const yInterval = squareSize / 4;
@@ -28,6 +34,7 @@ function conv(props) {
 }
 
 function dense(props) {
+  // svg for a dense layer
   const xSize = 40;
   const ySize = 80;
   const numCircles = 3;
@@ -59,6 +66,7 @@ function dense(props) {
 }
 
 function input(props) {
+  // svg for an input layer
   const size = 30
   const color = "#99ccff";
   return <React.Fragment>
@@ -67,6 +75,7 @@ function input(props) {
 }
 
 function output(props) {
+  // svg for an output layer
   const color = "#008066";
   const width = 30;
   const height = 60;
@@ -86,6 +95,7 @@ function output(props) {
 }
 
 function maxpool(props) {
+  // svg for a maxpool layer
   const squareSize = 30;
   const xInterval = squareSize / 4;
   const yInterval = squareSize / 4;
@@ -102,6 +112,7 @@ function maxpool(props) {
 }
 
 function embedding(props) {
+  // svg for an embedding layer
   const width = 20;
   const height = 15;
   const firstColor = "#6a41f4";
@@ -115,6 +126,7 @@ function embedding(props) {
 }
 
 function dropout(props) {
+  // svg for a dropout layer
   const len = 10;
   const color = "#404040";
   return <React.Fragment>
@@ -133,6 +145,7 @@ function dropout(props) {
 }
 
 function flatten(props) {
+  // svg for a flatten layer
   const width = 16;
   const height = 120;
   const color = "#404040";
@@ -141,8 +154,8 @@ function flatten(props) {
   </React.Fragment>
 }
 
-// redo visual another day yeah? TODO
 function relu(x, y) {
+  // svg for a relu function
   const width = 12;
   const height = 8;
   return <React.Fragment>
@@ -151,6 +164,7 @@ function relu(x, y) {
 }
 
 function sigmoid(x, y) {
+  // svg for a sigmoid function
   const width = 12;
   const height = 4;
   return (
@@ -159,6 +173,7 @@ function sigmoid(x, y) {
 }
 
 function softmax(x, y) {
+  // svg for a softmax function
   const width = 24;
   const height = 8;
   return (
@@ -167,13 +182,25 @@ function softmax(x, y) {
 }
 
 function tanh(x, y) {
-  // M 0 160 Q 140 160 240 80 Q 340 0 480 0 
+  // svg for a tanh function
   const width = 12;
   const height = 4;
   return (
     <path d={"M "+(x-width)+" "+y+" q "+(width-5)+ " 0 " + width + " " + (-height) + " q 5 " + (-height) + " " + width + " " + (-height)} stroke="black" strokeWidth="2" fill="none"/>
   )
 }
+
+// this is a mapping from node type (layer or activation)
+// to its relevant constant information
+
+// name is its display name
+// type can be layer or activation
+// svg is its corresponding svg to be rendered
+// defaultParameters include its default parameters
+// canActivation indicates whether a layer can have an activation function
+// shapeOut is a functio nto calculate its output shape given its parameter and input shape
+
+// offsetX and offsetY for finding the center of the svg (from its corner)
 
 export const nodeTypes = {
     "dense": {
@@ -353,9 +380,9 @@ export const nodeTypes = {
           setError("Output layer must have input layer of shape (batchSize, dim)", false);
         }
         if (isArray(parameters['outputShape'])) {
-          return [shapeIn.slice(0,shapeIn.length-1), ...parameters['outputShape']];
+          return [...shapeIn.slice(0,shapeIn.length-1), ...parameters['outputShape']];
         } else {
-          return [shapeIn.slice(0,shapeIn.length-1), parameters['outputShape']];
+          return [...shapeIn.slice(0,shapeIn.length-1), parameters['outputShape']];
         }
         
       },
@@ -386,8 +413,11 @@ export const nodeTypes = {
     }
 };
 
+// some more constants
 export const layerNames = ["dense", "conv", "maxpool", "flatten", "embedding", "dropout"];
 export const activationNames = ["relu", "sigmoid", "softmax", "tanh"];
+
+// preset models
 
 export const blankModel = JSON.parse('{"0":{"name":"input0","ID":0,"type":"input","x":20,"y":50,"connectedTo":null,"shapeIn":null,"shapeOut":[25,28,28,1],"activation":null,"parameters":{"data":"MNIST","batchSize":25, "inputShape":[28,28,1]}},"1":{"name":"output1","ID":1,"type":"output","x":299,"y":50,"connectedTo":null,"shapeIn":[25,16],"shapeOut":[25,10],"activation":"sigmoid","parameters":{"data":"MNIST", "outputShape":[10]}}}');
 

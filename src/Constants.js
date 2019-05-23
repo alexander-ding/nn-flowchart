@@ -1,4 +1,4 @@
-export const DELETE_KEY = 8;
+export const DELETE_KEY = 8; // keycode
 export const BASE_URL = "http://localhost:5000/api/";
 
 export const DATASET_SHAPE = {

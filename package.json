@@ -2,6 +2,7 @@
   "name": "nn-flowchart",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://alexding123.github.io/nn-flowchart/",
   "dependencies": {
     "bootstrap": "^4.3.1",
     "d3": "^5.9.2",
@@ -20,6 +21,8 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
+    "predeploy": "react-scripts build",
+    "deploy": "gh-pages -d build",
     "watch": "npm-watch"
   },
   "watch": {
@@ -35,6 +38,7 @@
     "not op_mini all"
   ],
   "devDependencies": {
+    "gh-pages": "^2.0.1",
     "npm-watch": "^0.6.0"
   }
 }

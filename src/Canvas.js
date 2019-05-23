@@ -68,6 +68,7 @@ class Canvas extends React.Component {
   }
 
   deleteSelection(e) {
+    /* delete the selected model */
     // ignore delete if editing a parameter
     if (this.props.editableSelected) {
       return;
@@ -140,6 +141,9 @@ class Canvas extends React.Component {
   }
 
   onMouseUp(e) {
+    /* when the click is released, stop the drag-n-drop
+     * and decide if it's an actual click
+     */
     
     if (this.state.dragging === -1) {
       return;
@@ -210,6 +214,7 @@ class Canvas extends React.Component {
   }
 
   handleDrag(initX, initY, id) {
+    /* handle a new dragging session */
     const model = this.props.models[id];
     this.setState({
       dragging: id,

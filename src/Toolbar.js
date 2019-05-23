@@ -13,6 +13,7 @@ function DisplayLine(props) {
 }
 
 class EditableLine extends React.Component {
+  /* a line of parameters that is editable */
   constructor(props) {
     super(props);
     this.props = props;
@@ -37,6 +38,7 @@ class EditableLine extends React.Component {
   }
 
   onChange(event) {
+    /* update the value of the parameter when changed */
     const value = event.target.value;
 
     this.setState({
@@ -47,6 +49,7 @@ class EditableLine extends React.Component {
 
   render() {
     const oldValue = this.props.parameters[this.props.paraName];
+    // display oldValue if no value is changed
     const value = (this.state.valueChanged ? this.state.currentValue : oldValue);
 
     return (
@@ -59,6 +62,7 @@ class EditableLine extends React.Component {
 }
 
 function DataInput(props) {
+  /* the line allowing setting of dataset */
   return (
     <div className="parameter-line">
       <div className="parameter-name">Dataset</div>
@@ -74,6 +78,8 @@ function Parameters(props) {
   if (model === null) {
     return null;
   }
+
+  // differs depending on model type
   switch (model.type) {
     case "dense":
       return (
@@ -119,6 +125,9 @@ function Parameters(props) {
 }
 
 export function Toolbar(props) {
+  /* the master toolbar to the bottom */
+
+  // if no model is selected, show training information
   if (props.selected === -1) {
     const modelInfo = props.modelInfo;
     const trainingInfo = props.trainingInfo;
@@ -152,6 +161,9 @@ export function Toolbar(props) {
       </nav>
     )
   }
+
+  // if a model is selected...
+  // show the model's parameters page
   const model = props.models[props.selected];
 
   const type = nodeTypes[model.type].name;

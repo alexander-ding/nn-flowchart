@@ -2,6 +2,7 @@ import React from 'react';
 import "./SelectModel.css";
 
 export class SelectModel extends React.Component {
+  /* the page selecting a model */
   constructor(props) {
     super(props);
     this.props = props;
@@ -17,21 +18,30 @@ export class SelectModel extends React.Component {
   }
 
   setError(err) {
+    /* set local error (to be displayed as small text) */
     this.setState({err:err})
   }
+
   loadModel() {
+    /* load a custom model */
     this.props.loadModel(this.state.link, this.setError);
   }
 
   onChange(e) {
+    /* when the textbox is editted */
     this.setState({link:e.target.value});
   }
+
   noChange(e) {
+    /* the model selection is cancelled and nothing is done 
+     * if the user clicks on the background
+     */
     if (e.target.id === "background-model-select" || e.target.id === "model-blocker") {
       this.props.toggle();
     }
   }
   render() {
+    // empty if not displaying
     if (!this.props.display) {
       return null;
     }

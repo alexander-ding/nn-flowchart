@@ -27,14 +27,14 @@ export class App extends React.Component {
         epochs: "2",
         batchSize: "25",
         maxToken: null,
-        loss: "cce",
+        loss: "cce", // loss function
         optimizer: "adam",
         learningRate: "0.01",
       },
       selected: 0, // selected node;
       nextID: 2, // the ID for the next new layer; incremented as model grows
       errorMsg: null, // error message
-      errorOnce: false,
+      errorOnce: false, // whether the current error message can be cancelled 
       trainingInfo: {
         accuracy: null,
         testAccuracy: null,
@@ -82,6 +82,8 @@ export class App extends React.Component {
   }
 
   _model(type, id, x, y) {
+    /* Helper function to make a new model (for a layer) given id and its position
+     */
     return {
       name: type + String(id),
       ID: id,
@@ -97,9 +99,17 @@ export class App extends React.Component {
   }
 
   model(type) {
+    /* Function to make a new model given its layer type, putting
+     * it in a random location on the upper left corner of the canvas
+     */
     return this._model(type, this.state.nextID, 10 + Math.random() * 80, 10 + Math.random() * 80);
   }
   updateDependents(models) {
+    /* Given the current models, return models with the dependents
+     * (parameters updated given the independent variables) updated
+     * also reset the error (and may set some new ones given what happens in
+     * updating dependents)
+     */
     this.setError(null, false);
     return this._updateDependents(models);
   }
@@ -155,7 +165,8 @@ export class App extends React.Component {
       this.setError("Graph cannot have loops", false);
       return;
     } else if (!isLinear(models)["ok"]) {
-      this.setError(isLinear(models)["err"], false)
+      this.setError(isLinear(models)["err"], false);
+      return;
     } else {
       this.setError(null, false)
     }
@@ -234,6 +245,12 @@ export class App extends React.Component {
   }
 
   updateModelInfo(name, value, intOnly=false) {
+    /* update a key value pair of a model
+     * if intOnly is true, then the value must be an
+     * integer, or else it is rejected
+     */
+    
+    // reject non-ints
     if (intOnly) {
       if (isNaN(value) || value === "") {
         return;
@@ -268,22 +285,31 @@ export class App extends React.Component {
   }
   
   setEditableSelected(t) {
+    /* set whether an editable model is selected */
     this.setState({
       editableSelected: t,
     });
   }
 
   trainCloud() {
+    /* train the model on cloud, if the model is 
+     * well-formed
+     */
+
     // first check if the model is linear
     const models = this.updateDependents(this.state.models);
     this.setState({
       models: models,
     })
+
+    // then we check if the model is well-formed
     const resp = isTrainable(models);
     if (!resp["ok"]) {
       this.setError(resp["err"], true);
       return;
     }
+
+    // serialize model and save it to the database first
     const serializedModel = JSON.stringify({
       modelJSON: JSON.stringify({model: models, modelInfo: this.state.modelInfo}),
     });
@@ -292,7 +318,8 @@ export class App extends React.Component {
       let info = this.state.trainingInfo;
       info["training"] = true;
       this.setState({trainingInfo:info, modelID: responseJSON['data']["id"]});
-      this.selectModel(-1);
+      this.selectModel(-1); // deselect any model to show training progress
+      // after it is saved, start a training session
       this.startSession(responseJSON['data']["id"]);
     }).catch(e => {
       this.setError(e.message, true);
@@ -303,7 +330,10 @@ export class App extends React.Component {
     /* start training session */
     startSession(id).then(responseJSON => {
       const data = responseJSON['data'];
+      // periodically retrieve latest training info
       const intervalID = setInterval(this.updateTrain, 100);
+
+      // set the retrieved session id
       this.setState({
         sessionID: data['sessionID'],
         intervalID: intervalID,
@@ -314,6 +344,7 @@ export class App extends React.Component {
   }
 
   updateTrain() {
+    /* update the information about the current training session */
     updateTrain(this.state.sessionID).then(data => {
       const trainingInfo = {
         accuracy: String(Math.floor(data['accuracy']*100))+"%",
@@ -334,6 +365,7 @@ export class App extends React.Component {
   }
 
   cancelTrain() {
+    /* cancel the training session */
     clearInterval(this.state.intervalID);
     let trainingInfo = this.state.trainingInfo;
     trainingInfo['training'] = false;
@@ -342,7 +374,11 @@ export class App extends React.Component {
   }
 
   loadModel(link, setError) {
+    /* load a stored model from a model's link */
+
+    // get model ID
     getIDFromLink(link).then(modelID => {
+      // then get the model itself given the ID
       getModel(modelID).then(modelJSON => {
         const decoded = JSON.parse(modelJSON);
         let modelInfo = this.state.modelInfo;
@@ -350,6 +386,7 @@ export class App extends React.Component {
         this.setState({
           modelInfo: modelInfo,
           models: decoded['model'],
+          // find the largest index
           nextID: Math.max(...Object.keys(decoded['model']).map(key => Number(key)))+1,
           selectModelPage: false,
         });
@@ -363,6 +400,7 @@ export class App extends React.Component {
   }
 
   loadDefaultModel(name) {
+    /* load one of the preset default models */
     let model = null;
     switch (name) {
       case "blank":
@@ -379,13 +417,15 @@ export class App extends React.Component {
     }
     this.setState({
       nextID: Math.max(...Object.keys(model).map(key => Number(key)))+1,
-      models: model,
+      models: model['model'],
+      modelInfo: model['info'],
       selectModelPage: false,
     });
 
   }
 
   getLink() {
+    /* get a link for the current model */
     const models = this.updateDependents(this.state.models);
     this.setState({
       models: models,
@@ -394,6 +434,7 @@ export class App extends React.Component {
       modelJSON: JSON.stringify({model: models, modelInfo: this.state.modelInfo}),
     });
     
+    // save the model first then get a link
     saveModel(serializedModel).then(responseJSON => {
       generateLink(responseJSON["data"]["id"]).then( responseJSON => {
         const link = responseJSON['data']['link'];
@@ -411,21 +452,30 @@ export class App extends React.Component {
   }
 
   downloadModel() {
+    /* download the current model */
+
+    // first update dependent to make sure things are right
     const models = this.updateDependents(this.state.models);
     this.setState({
       models: models,
     })
+
+    // check if model is well-formed
     const resp = isTrainable(models);
     if (!resp["ok"]) {
       this.setError(resp["err"], true);
       return;
     }
+
+    // save the model, then download it
     const serializedModel = JSON.stringify({
       modelJSON: JSON.stringify({model: models, modelInfo: this.state.modelInfo}),
     });
     saveModel(serializedModel).then((responseJSON) => {
       const modelID = responseJSON['data']["id"];
       downloadModel(modelID).then(data => {
+        // create a temporary anchor element and click it
+        // to download this file
         const element = document.createElement("a");
         const file = new Blob([data], {type: 'text/json'});
         element.href = URL.createObjectURL(file);
@@ -440,7 +490,10 @@ export class App extends React.Component {
   }
 
   loadDefaultInput(name) {
+    /* load an input dataset that is preset */
+    
     let models = this.state.models;
+    // set the parameters of the current model
     models[0]['parameters']['data'] = name;
     models[0]['parameters']['inputShape'] = DATASET_SHAPE[name].input;
     models[1]['parameters']['outputShape'] = DATASET_SHAPE[name].output;
@@ -449,13 +502,17 @@ export class App extends React.Component {
     if (name === "IMDB")
       modelInfo['maxToken'] = 1000;
     this.setState({
-      models: this.updateDependents(models),
+      // update dependent to make shapes correct
+      models: this.updateDependents(models), 
       settingInput: false,
       modelInfo: modelInfo,
     });
   }
 
   loadCustomInput(url, name, inputShape, outputShape, setError) {
+    /* load a user custom input set */
+
+    // make sure all the inputs are reasonable
     if (inputShape.length === 0 || outputShape.length === 0) {
       setError("Input and output shapes must be set");
       return;
@@ -464,17 +521,20 @@ export class App extends React.Component {
       setError("Name your dataset!");
       return;
     }
+
+    // load the input from server
     loadInput(url, name, inputShape, outputShape).catch(e => {
       setError(e.message);
       return;
     }).then(data => {
       let models = this.state.models;
+      // store them into the current model
       models[0].parameters['data'] = data.datasetName;
       models[0].parameters['inputShape'] = JSON.parse(data.inputShape);
       models[0].parameters['datasetID'] = data.datasetID;
       models[1].parameters['data'] = data.datasetName;
       models[1].parameters['outputShape'] = JSON.parse(data.outputShape);
-
+      // keep shapes correct
       models = this.updateDependents(models);
 
       this.setState({
@@ -486,12 +546,14 @@ export class App extends React.Component {
   }
 
   setInput() {
+    /* bring up the setting input page */
     this.setState({
       settingInput: true,
     });
   }
 
   trainSetup() {
+    /* bring up the train setup page */
     this.setState({
       trainSetup: true,
     })

@@ -2,10 +2,13 @@ import React from 'react';
 import "./LinkPage.css";
 
 export function LinkPage(props) {
+  /* the page showing a link is generated */
   if (!props.display) {
     return null;
   }
-  // some code to copy to clipboard
+  // some code to copy the link to clipboard
+  // create a dummy element with the link as text
+  // select it and copy the text
   var dummy = document.createElement("textarea");
   document.body.appendChild(dummy);
   dummy.value = props.link;

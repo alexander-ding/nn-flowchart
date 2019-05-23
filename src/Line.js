@@ -1,21 +1,26 @@
 import React from 'react';
 
 export function MarkerDefs(props) {
-    return (
-      <defs>
-        <marker id="dot" viewBox="0 0 10 10" refX="5" refY="5"
-          markerWidth="5" markerHeight="5">
-          <circle cx="5" cy="5" r="3" fill="black" />
-        </marker>
-        <marker id="arrow" markerWidth="4" markerHeight="4"
-        orient="auto" refY="2">
-          <path d="M0,0 L4,2 0,4"/>
-        </marker>
-      </defs>
-    )
+  /* defines the marker for the lines drawn in the svg */
+  // arrowed line
+  return (
+    <defs>
+      <marker id="dot" viewBox="0 0 10 10" refX="5" refY="5"
+        markerWidth="5" markerHeight="5">
+        <circle cx="5" cy="5" r="3" fill="black" />
+      </marker>
+      <marker id="arrow" markerWidth="4" markerHeight="4"
+      orient="auto" refY="2">
+        <path d="M0,0 L4,2 0,4"/>
+      </marker>
+    </defs>
+  )
   }
   
 export function Line(props) {
+  /* defines an actual svg line, with arrows and dotted
+   * if selected
+   */
     const strokeDasharray = props.tentative ? "5,5" : null;
     const className = props.selected ? "selected" : null;
     const onClick = props.tentative ? null : props.onClick;

@@ -4,6 +4,7 @@ import "./Sidebar.css";
 import {nodeTypes, layerNames, activationNames} from "./ModelInfo.js";
 
 function SidebarHeader(props) {
+  /* the header (top left corner) of the sidebar */
   const selectedClassName = "btn btn-dark btn-block";
   const unselectedClassName = "btn btn-outline-dark btn-block";
   return (
@@ -23,6 +24,7 @@ function SidebarHeader(props) {
 }
 
 function CTAList() {
+  /* the credits on the bottom left corner */
   return (
     <ul className="list-unstyled CTAs">
       <li>
@@ -33,6 +35,7 @@ function CTAList() {
 }
 
 function Button(props) {
+  /* a button to be displayed on the sidebar */
   return (
     <div className="p-2 align-self-stretch button-container">
       <button className="btn btn-sm btn-dark btn-block" onClick={props.onClick} disabled={props.disabled}>
@@ -61,6 +64,7 @@ function Activation(props) {
 }
 
 class EditElements extends React.Component {
+  /* the sidebar when it's under the edit bar */
   constructor(props) {
     super(props);
     this.props = props;
@@ -69,6 +73,7 @@ class EditElements extends React.Component {
   }
 
   setActivation(name) {
+    /* set the selected model to a particular activation function */
     // must have a layer selected
     if (this.props.selected === -1) {
       this.props.setError("Select a layer to add the activation to first!", true);
@@ -122,8 +127,11 @@ class EditElements extends React.Component {
 }
 
 function TrainElements(propOri) {
+  /* the display of the sidebar when it is under the train tab */
   const props = propOri.props;
   const isTraining = props.trainingInfo["training"];
+
+  // train if not training, cancel button if training
   const trainButton = (!isTraining) ? 
                  <Button onClick={props.trainCloud}>Train on Cloud</Button> : 
                  <Button onClick={props.cancelTrain}>Cancel</Button>;
@@ -145,6 +153,7 @@ function TrainElements(propOri) {
 }
 
 function ElementsContainer(props) {
+  /* the container of a list of buttons */
   const propsExtracted = props.props;
   const Elements = props.tabSelected === "edit" ? <EditElements propsOri={props} models={propsExtracted.models} selected={propsExtracted.selected} setError={propsExtracted.setError} newModel={propsExtracted.newModel} update={propsExtracted.update}/>: <TrainElements props={propsExtracted}/>;
   return (
@@ -155,12 +164,13 @@ function ElementsContainer(props) {
 }
 
 export class Sidebar extends React.Component {
+  /* the master sidebar to the left */
   constructor(props) {
     super(props);
     this.props = props
     this.state = {
       tabSelected: "edit", // which tab is selected
-      layersCollapsed: false,
+      layersCollapsed: false, // whether the accordion tab is collapsed
       activationsCollapsed: false,
     };
     this.changeTab = this.changeTab.bind(this);
@@ -168,6 +178,7 @@ export class Sidebar extends React.Component {
   }
 
   set(name, v) {
+    /* set whether the tab is collapsed */
     if (name === "layers") {
       this.setState({layersCollapsed: v});
     } else if (name === "activations") {
