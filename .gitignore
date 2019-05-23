@@ -28,3 +28,4 @@ chrome-user-data
 versions
 *.npy
 .ipynb_checkpoints
+venv

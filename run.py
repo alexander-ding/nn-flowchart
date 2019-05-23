@@ -17,6 +17,8 @@ def create_app(config_filename):
     app.register_blueprint(api_bp, url_prefix='/api')
 
     db.init_app(app)
+    app.app_context().push()
+    db.create_all()
     CORS(app, resources={r"/api/*": {"origins": "*"}}) # this allows the api to be accessed by other users!
     return app
 
