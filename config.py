@@ -6,4 +6,7 @@ import os
 basedir = os.path.abspath(os.path.dirname(__file__))
 SQLALCHEMY_ECHO = False
 SQLALCHEMY_TRACK_MODIFICATIONS = True
-SQLALCHEMY_DATABASE_URI = "postgresql://postgres:@localhost/nn-flowchart"
+if 'DATABASE_URL' in os.environ.keys():
+    SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
+else:
+    SQLALCHEMY_DATABASE_URI = "postgresql://postgres:@localhost/nn-flowchart"
