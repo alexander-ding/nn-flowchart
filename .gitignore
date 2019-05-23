@@ -25,7 +25,8 @@ chrome-user-data
 .vscode
 *.swp
 *.swo
-versions
+versions/*
+!versions/.gitkeep
 *.npy
 .ipynb_checkpoints
 venv
