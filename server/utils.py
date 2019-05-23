@@ -35,7 +35,7 @@ def shuffle_together(a, b):
     indices = np.random.permutation(a.shape[0])
     return (a[indices], b[indices])
 
-def new_key(self, N=10):
+def new_key(N=10):
     """ Helper function to generate a random key
 
         Returns
