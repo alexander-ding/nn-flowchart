@@ -1,5 +1,9 @@
 # Neural Net Flowchart
 
+## Overview
+
+Tired of writing code to experiment with your neural networks and figuring out shapes or even having a sense of what's going on in your model? NN Flowchart provides an intuitive visual interface to drag-and-drop layers, edit architectures, and test your changes by training them on cloud. Besides being a great playground to test out simple architectures, it is a also a good learning tool to see the differences between design choices you make. 
+
 ## Getting Started
 
 This codebase uses two servers: a Flask server for the backend API and a React-based frontend (which, after it is built, can be deployed by any static server).
