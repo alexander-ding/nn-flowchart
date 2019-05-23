@@ -415,9 +415,9 @@ export class App extends React.Component {
         return;
     }
     this.setState({
-      nextID: Math.max(...Object.keys(model).map(key => Number(key)))+1,
+      nextID: Math.max(...Object.keys(model['model']).map(key => Number(key)))+1,
       models: model['model'],
-      modelInfo: model['info'],
+      modelInfo: model['modelInfo'],
       selectModelPage: false,
     });
 
@@ -540,7 +540,6 @@ export class App extends React.Component {
         models: models,
         settingInput: false,
       });
-      console.log(models);
     });
   }
 
