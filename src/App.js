@@ -382,7 +382,6 @@ export class App extends React.Component {
       getModel(modelID).then(modelJSON => {
         const decoded = JSON.parse(modelJSON);
         let modelInfo = this.state.modelInfo;
-        modelInfo['epochs'] = decoded['epochs'];
         this.setState({
           modelInfo: modelInfo,
           models: decoded['model'],

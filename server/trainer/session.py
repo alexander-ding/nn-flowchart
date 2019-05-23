@@ -6,6 +6,10 @@ from keras.callbacks import LambdaCallback, Callback
 from keras import backend as K
 import tensorflow as tf
 import threading
+from .layers import *
+from .optimizers import *
+from .losses import *
+from .inputs import *
 
 class EarlyStopper(Callback):
     """ This is for Keras to enable stopping training early

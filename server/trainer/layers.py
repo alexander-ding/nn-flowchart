@@ -11,7 +11,7 @@ def input_layer(layer):
         -------
         keras.layer
     """
-    return Input(['shapeOut'][1:])
+    return Input(layer['shapeOut'][1:])
 
 def dense_layer(layer, model):
     """ Gets a Dense layer and applies it to the current model

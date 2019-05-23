@@ -1,5 +1,5 @@
 export const DELETE_KEY = 8; // keycode
-export const BASE_URL = "https://nn-flowchart.herokuapp.com/api/";
+export const BASE_URL = "http://localhost:5000/api/";//"https://nn-flowchart.herokuapp.com/api/";
 
 export const DATASET_SHAPE = {
     "MNIST": {
