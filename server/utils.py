@@ -3,9 +3,7 @@
 
 from os.path import splitext
 from urllib.parse import urlparse
-import numpy as np
 import requests
-import mimetypes
 import random
 import string
 
