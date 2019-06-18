@@ -86,6 +86,12 @@ export class App extends React.Component {
     this.trainSetup = this.trainSetup.bind(this);
   }
 
+  componentDidMount() {
+    getModel(1); // any activity to the server to wake it up
+    // the server sleeps after 10 min of inactivity cuz
+    // I'm too poor to host a proper API server
+  }
+
   _model(type, id, x, y) {
     /* Helper function to make a new model (for a layer) given id and its position
      */
