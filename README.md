@@ -1,10 +1,19 @@
 # Neural Net Flowchart
 
+Check it out 
+
+## Features
+
+- Fast visual drag-and-drop experimentation of neural network architectures
+- In-browser training and testing
+- Supports model downloading
+- Save your model and share the link
+
 ## Getting Started
 
 This codebase uses two servers: a Flask server for the backend API and a React-based frontend (which, after it is built, can be deployed by any static server).
 
-### For the Frontend
+### For the Frontend (assuming Mac OS)
 
 First install `homebrew`.
 
@@ -57,10 +66,18 @@ Now we install the Python dependencies:
 pip install -r requirements.txt
 ```
 
-Run `python run.py` to start the server.
+One last thing, be sure to migrate the database (see below). Run `python run.py` to start the server.
 Then go `serve -s build` to serve the frontend. Things should be working now.
 
 ## Migrate Database
+
+If the directory `server/migrations` does not exist, run
+
+```Bash
+python migrate.py db init
+```
+
+and complete the following.
 
 Every time the SQL database structure is updated in the Python code, run the following code in order to update the SQL server.
 

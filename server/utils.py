@@ -25,16 +25,6 @@ def get_ext(url):
     root, ext = splitext(parsed.path)
     return ext
 
-def shuffle_together(a, b):
-    """ Shuffle two arrays (of the same size) together
-
-        Returns
-        -------
-        np.array, np.array
-    """
-    indices = np.random.permutation(a.shape[0])
-    return (a[indices], b[indices])
-
 def new_key(N=10):
     """ Helper function to generate a random key
 

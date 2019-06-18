@@ -9,4 +9,4 @@ SQLALCHEMY_TRACK_MODIFICATIONS = True
 if 'DATABASE_URL' in os.environ.keys():
     SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
 else:
-    SQLALCHEMY_DATABASE_URI = "postgresql://postgres:@localhost/nn-flowchart"
+    SQLALCHEMY_DATABASE_URI = "postgresql://postgres:postgres@localhost/nn_flowchart"

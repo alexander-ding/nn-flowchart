@@ -8,9 +8,11 @@ import {LinkPage} from "./LinkPage.js";
 import {SetInput} from "./SetInput.js";
 import {isCyclic, isLinear, isTrainable} from "./Utils.js";
 import {nodeTypes, blankModel, denseModel, convModel} from "./ModelInfo.js";
-import {getModel, saveModel, startSession, updateTrain, deleteTrain, generateLink, getIDFromLink, downloadModel, loadInput} from "./Server.js";
+import {getModel, saveModel, generateLink, getIDFromLink, loadInput} from "./Server.js";
 import {TrainSetup} from "./TrainSetup.js";
 import {DATASET_SHAPE} from "./Constants.js";
+import {compileModel} from "./Model.js";
+import {MnistData} from "./Data.js";
 import cloneDeep from 'lodash/cloneDeep';
 import './App.css';
 
@@ -40,11 +42,13 @@ export class App extends React.Component {
         testAccuracy: null,
         loss: null,
         progress: null,
-        training: false, // whether the model is being trained on cloud
+        status: "Edit", // whether the model is getting trained or editted
+        currentEpoch: 0,
+        correct: 0,
+        total: 0,
+        batchesPerEpoch: null,
       },
-      modelID: null, // ID of the model
-      sessionID: null, // ID of the training session
-      intervalID: null, // ID of the interval to be set
+      
       editableSelected: false, // whether an editable element of the toolbar is selected
       selectModelPage: true, // is it in the page selecting model or main page
       linkPage: false, // is link page on display
@@ -65,6 +69,7 @@ export class App extends React.Component {
 
     this.trainCloud = this.trainCloud.bind(this);    
     this.startSession = this.startSession.bind(this);
+    this.endSession = this.endSession.bind(this); 
     this.updateTrain = this.updateTrain.bind(this);
     this.cancelTrain = this.cancelTrain.bind(this);
     this.state["models"] = this._updateDependents(this.state.models);
@@ -309,68 +314,94 @@ export class App extends React.Component {
       return;
     }
 
-    // serialize model and save it to the database first
-    const serializedModel = JSON.stringify({
-      modelJSON: JSON.stringify({model: models, modelInfo: this.state.modelInfo}),
-    });
-    
-    saveModel(serializedModel).then((responseJSON) => {
-      let info = this.state.trainingInfo;
-      info["training"] = true;
-      this.setState({trainingInfo:info, modelID: responseJSON['data']["id"]});
-      this.selectModel(-1); // deselect any model to show training progress
-      // after it is saved, start a training session
-      this.startSession(responseJSON['data']["id"]);
-    }).catch(e => {
-      this.setError(e.message, true);
-    });
+    const model = compileModel(this.state.models, this.state.modelInfo);
+
+    this.startSession(model);
   }
 
-  startSession(id) {
+  
+
+  startSession(model) {
     /* start training session */
-    startSession(id).then(responseJSON => {
-      const data = responseJSON['data'];
-      // periodically retrieve latest training info
-      const intervalID = setInterval(this.updateTrain, 100);
+    // periodically retrieve latest training info
+    let trainingInfo = this.state.trainingInfo;
+    trainingInfo.status = 'Loading...';
 
-      // set the retrieved session id
-      this.setState({
-        sessionID: data['sessionID'],
-        intervalID: intervalID,
+    this.setState({trainingInfo: trainingInfo});
+    const data = new MnistData();
+    const updateTrain = this.updateTrain;
+    const endSession = this.endSession;
+    data.load().then(() => {
+      const [xs, ys] = data.getTrainData(10000);
+      
+      trainingInfo.status = 'Training';
+      trainingInfo.batchesPerEpoch = Math.floor(xs.shape[0] / this.state.modelInfo.batchSize);
+      trainingInfo.currentEpoch = -1; // as the first call will add 1
+      this.setState({trainingInfo: trainingInfo});
+      model.fit(xs, ys, {
+        epochs: parseInt(this.state.modelInfo.epochs),
+        batchSize: parseInt(this.state.modelInfo.batchSize),
+        callbacks: {onBatchEnd: (batch, logs) => updateTrain(model, batch, logs), onTrainEnd: (logs) => endSession(model, data)},
+        validationSplit: 0.1,
       });
-    }).catch(e => {
-      this.setError(e.message, true);
-    });
+      
+    })
+    this.selectModel(-1); // deselect any model to show training progress
   }
 
-  updateTrain() {
+  
+
+  updateTrain(model, batch, logs) {
     /* update the information about the current training session */
-    updateTrain(this.state.sessionID).then(data => {
-      const trainingInfo = {
-        accuracy: String(Math.floor(data['accuracy']*100))+"%",
-        testAccuracy: String(Math.floor(data['test_accuracy']*100))+"%",
-        loss: Number(parseFloat(data['loss']).toFixed(3)),
-        progress: String(Math.floor(data['progress']*100))+"%",
-        training: !data['trained'], // whether the model is being trained on cloud
-      }
-      this.setState({trainingInfo: trainingInfo});
-      // stop updating if training is done
-      if (data['trained']) {
-        clearInterval(this.state.intervalID);
-      }
-    }).catch(e => {
-      this.setError(e.message, true);
-      this.cancelTrain();
-    });
+
+    // if early stopping
+    if (this.state.trainingInfo.status === "Edit") {
+      model.stopTraining = true;
+      return;
+    }
+    let trainingInfo = this.state.trainingInfo;
+    if (batch === 0) {
+      trainingInfo.currentEpoch += 1;
+      trainingInfo.correct = 0;
+      trainingInfo.total = 0;
+    }
+    const batchSize = parseInt(this.state.modelInfo.batchSize);
+    const epochs = this.state.modelInfo.epochs;
+    const batchesPerEpoch = this.state.trainingInfo.batchesPerEpoch;
+    const currentEpoch = trainingInfo.currentEpoch;
+
+    const correct = logs.acc * batchSize;
+    trainingInfo.correct += correct;
+    trainingInfo.total += batchSize;
+    trainingInfo.accuracy = trainingInfo.correct / trainingInfo.total;
+    trainingInfo.loss = logs.loss;
+    trainingInfo.progress = (currentEpoch / epochs) + (batch / batchesPerEpoch) / epochs;
+    this.setState({trainingInfo: trainingInfo});
+    
+  }
+
+  endSession(model, data) {
+    let trainingInfo = this.state.trainingInfo;
+    trainingInfo.progress = 1;
+    trainingInfo.currentEpoch = 0;
+    trainingInfo.status = "Test";
+    this.setState({trainingInfo: trainingInfo});
+
+    // then evaluate the model
+    const [xs, ys] = data.getTestData();
+    const result = model.evaluate(xs, ys);
+    const testAccuracy = result[1].as1D().dataSync()[0];
+    trainingInfo.testAccuracy = testAccuracy;
+    trainingInfo.status = "Edit";
+    trainingInfo.progress = 0;
+    this.setState({trainingInfo: trainingInfo});
   }
 
   cancelTrain() {
     /* cancel the training session */
-    clearInterval(this.state.intervalID);
     let trainingInfo = this.state.trainingInfo;
-    trainingInfo['training'] = false;
+    trainingInfo['status'] = "Edit";
     this.setState({trainingInfo:trainingInfo});
-    deleteTrain(this.state.sessionID);
   }
 
   loadModel(link, setError) {
@@ -450,7 +481,7 @@ export class App extends React.Component {
     
   }
 
-  downloadModel() {
+  async downloadModel() {
     /* download the current model */
 
     // first update dependent to make sure things are right
@@ -466,26 +497,9 @@ export class App extends React.Component {
       return;
     }
 
-    // save the model, then download it
-    const serializedModel = JSON.stringify({
-      modelJSON: JSON.stringify({model: models, modelInfo: this.state.modelInfo}),
-    });
-    saveModel(serializedModel).then((responseJSON) => {
-      const modelID = responseJSON['data']["id"];
-      downloadModel(modelID).then(data => {
-        // create a temporary anchor element and click it
-        // to download this file
-        const element = document.createElement("a");
-        const file = new Blob([data], {type: 'text/json'});
-        element.href = URL.createObjectURL(file);
-        element.download = "model_architecture.json";
-        element.click();
-      }).catch(e => {
-        this.setError(e.message, true);
-      })
-    }).catch(e => {
-      this.setError(e.message, true);
-    });
+    // compile the model
+    const model = compileModel(models, this.state.modelInfo);
+    await model.save("downloads://tfjs-model");
   }
 
   loadDefaultInput(name) {

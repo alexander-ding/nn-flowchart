@@ -131,10 +131,10 @@ export function Toolbar(props) {
   if (props.selected === -1) {
     const modelInfo = props.modelInfo;
     const trainingInfo = props.trainingInfo;
-    const loss = (trainingInfo.loss === null) ? "N/A" : trainingInfo.loss;
-    const accuracy = (trainingInfo.accuracy === null) ? "N/A" : trainingInfo.accuracy;
-    const testAccuracy = (trainingInfo.testAccuracy === null) ? "N/A" : trainingInfo.testAccuracy;
-    const progress = (trainingInfo.progress === null) ? "0.0%" : trainingInfo.progress;
+    const loss = (trainingInfo.loss === null) ? "N/A" : trainingInfo.loss.toFixed(2);
+    const accuracy = (trainingInfo.accuracy === null) ? "N/A" : (trainingInfo.accuracy*100).toFixed(2) + "%";
+    const testAccuracy = (trainingInfo.testAccuracy === null) ? "N/A" : (trainingInfo.testAccuracy*100).toFixed(2) + "%";
+    const progress = (trainingInfo.progress === null) ? "0.0%" : (trainingInfo.progress*100).toFixed(2) + "%";
     return (
       <nav className="p-2 no-margin" id="toolbar">
         <div id="toolbar-container">
@@ -147,7 +147,7 @@ export function Toolbar(props) {
           <div className="blocker"></div>
           <div className="middle-line">
             <p>Train Information</p>
-            <DisplayLine name="Training" value={trainingInfo.training ? "Yes" : "No"}/>
+            <DisplayLine name="Status" value={trainingInfo.status}/>
             <DisplayLine name="Progress" value={progress}/>
           </div>
           <div className="blocker"></div>

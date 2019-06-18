@@ -4,8 +4,8 @@
 from flask import Flask, send_file
 from flask_cors import CORS
 
-import atexit
-from server import api_bp, db, at_shutdown
+import os
+from server import api_bp, db
 
 def create_app(config_filename):
     """ Create an app given the filename of the configuration file
@@ -23,10 +23,13 @@ def create_app(config_filename):
     return app
 
 app = create_app("config")
-app.debug = True
+if 'DATABASE_URL' in os.environ.keys():
+    app.debug = False
+else:
+    app.debug = True
+    
 if __name__ == "__main__":
     @app.route("/")
     def index():  
         return send_file('build/index.html')
-    atexit.register(at_shutdown, app) # ready the at_shutdown for a graceful shutdown
     app.run()

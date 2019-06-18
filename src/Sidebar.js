@@ -129,7 +129,7 @@ class EditElements extends React.Component {
 function TrainElements(propOri) {
   /* the display of the sidebar when it is under the train tab */
   const props = propOri.props;
-  const isTraining = props.trainingInfo["training"];
+  const isTraining = props.trainingInfo["status"] !== "Edit";
 
   // train if not training, cancel button if training
   const trainButton = (!isTraining) ? 

@@ -144,13 +144,12 @@ export class SetInput extends React.Component {
           <h2>Load Preset</h2>
           <div className="d-flex flex-wrap p-2">
             <div className="p-2"><button type="button" onClick={() => this.props.loadDefaultInput("MNIST")} className="btn btn-secondary">MNIST</button></div>
-            <div className="p-2"><button type="button" onClick={() => this.props.loadDefaultInput("IMDB")} className="btn btn-secondary">IMDB</button></div>
           </div>
           
         </div>
         <div id="input-blocker" className="input-blocker"></div>
         <div className="input-load">
-          <h2>Load Custom Dataset</h2>
+          <h2>Load Custom Dataset (BROKEN)</h2>
           <div className="form-group">
             <input type="text" className="form-control" placeholder="Enter input URL" onChange={this.onChange} value={this.state.link}></input>
           </div>

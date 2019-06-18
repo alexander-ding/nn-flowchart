@@ -30,23 +30,6 @@ class ArchitectureSchema(ma.Schema):
     id = fields.Integer()
     modelJSON = fields.String(required=True)
 
-class Train(db.Model):
-    __tablename__ = "train"
-    id = db.Column(db.Integer, primary_key=True)
-    modelID = db.Column(db.Integer)
-    sessionID = db.Column(db.TEXT()) # sessionID in service
-    done = db.Column(db.Boolean, default=False)
-
-    def __init__(self, modelID, sessionID):
-        self.modelID = modelID
-        self.sessionID = sessionID
-
-class TrainSchema(ma.Schema):
-    id = fields.Integer()
-    modelID = fields.Integer(required=True)
-    sessionID = fields.String(required=True)
-    done = fields.Boolean()
-
 class Link(db.Model):
     __tablename__ = "link"
     id = db.Column(db.Integer, primary_key=True)
