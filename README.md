@@ -1,6 +1,6 @@
 # Neural Net Flowchart
 
-Check it out 
+Check it out [here](https://alexding123.github.io/nn-flowchart/)
 
 ## Features
 
