@@ -353,7 +353,6 @@ export class App extends React.Component {
 
   updateTrain(model, batch, logs) {
     /* update the information about the current training session */
-
     // if early stopping
     if (this.state.trainingInfo.status === "Edit") {
       model.stopTraining = true;
@@ -377,7 +376,7 @@ export class App extends React.Component {
     trainingInfo.loss = logs.loss;
     trainingInfo.progress = (currentEpoch / epochs) + (batch / batchesPerEpoch) / epochs;
     this.setState({trainingInfo: trainingInfo});
-    
+    return;
   }
 
   endSession(model, data) {
