@@ -1,6 +1,6 @@
 # Neural Net Flowchart
 
-Check it out [here](https://alexding123.github.io/nn-flowchart/)
+An in-browser playground to rapidly experiment with simple neural network architectures.
 
 ## Features
 
