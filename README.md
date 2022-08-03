@@ -4,10 +4,10 @@ Check it out [here](https://alexding123.github.io/nn-flowchart/)
 
 ## Features
 
-- Fast visual drag-and-drop experimentation of neural network architectures
-- In-browser training and testing
-- Supports model downloading
-- Save your model and share the link
+- Use the simple drag-and-drop UI to define neural network architecture
+- Train and test in the browser with Tensorflow.js
+- Save your model and share the permalink
+- Download your model as a Tensorflow.js JSON file
 
 ## Getting Started
 
